@@ -1,0 +1,35 @@
+{
+    "lintOptions": {
+        "typeCheck": true
+    },
+    "extends": "tslint:recommended",
+    "rules": {
+        "quotemark": [
+            true,
+            "single"
+        ],
+        "newline-before-return": false,
+        "no-angle-bracket-type-assertion": false,
+        "eofline": false,
+        "object-literal-shorthand": false,
+        "object-literal-sort-keys": false,
+        "trailing-comma": [
+            false
+        ],
+        "max-line-length": [
+            true,
+            200
+        ],
+        "object-literal-key-quotes": [
+            false
+        ],
+        "ordered-imports": false,
+        "prefer-const": false,
+        "triple-equals": false,
+        "no-empty": false,
+        "prefer-for-of": false,
+        "arrow-parens": false,
+        "no-unused-expression": false,
+        "one-variable-per-declaration": false
+    }
+}
