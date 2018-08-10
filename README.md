@@ -1,0 +1,1 @@
+# NestJS - RabbitMQ custom stratagy
