@@ -29,7 +29,7 @@ export class ClientRMQ extends ClientProxy {
     protected publish(messageObj, callback: (err, result, disposed?: boolean) => void) {
         try {
             let correlationId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
-            this.responseEmitter.once(correlationId, msg => {
+            this.responseEmitter.on(correlationId, msg => {
                 this.handleMessage(msg, callback);
             });
             this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(messageObj)), {
@@ -47,7 +47,7 @@ export class ClientRMQ extends ClientProxy {
             const { content } = message;
             const { err, response, isDisposed } = JSON.parse(content.toString());
             if (isDisposed || err) {
-                return callback({
+                callback({
                     err,
                     response: null,
                     isDisposed: true,
