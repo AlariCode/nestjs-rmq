@@ -1,6 +1,6 @@
 {
   "name": "nestjs-rmq",
-  "version": "0.0.5",
+  "version": "0.1.0",
   "description": "NestJS custom stratagy for RabbitMQ",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

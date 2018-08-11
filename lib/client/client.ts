@@ -2,6 +2,13 @@ import { Channel, Connection, Options } from 'amqplib';
 import { ClientProxy } from '@nestjs/microservices';
 import { ClientOptions } from './client.interface';
 import { EventEmitter } from 'events';
+import { 
+    DEFAULT_IS_GLOBAL_PREFETCH_COUNT,
+    DEFAULT_PREFETCH_COUNT,
+    DEFAULT_QUEUE,
+    DEFAULT_QUEUE_OPTIONS,
+    DEFAULT_URL
+} from '../constants';
 import * as rqmPackage from 'amqplib';
 
 export class ClientRMQ extends ClientProxy {
@@ -18,11 +25,11 @@ export class ClientRMQ extends ClientProxy {
     constructor(
         private readonly options: ClientOptions) {
         super();
-        this.url = this.options.url || 'amqp://localhost';
-        this.queue = this.options.queue || 'default';
-        this.prefetchCount = this.options.prefetchCount || 0;
-        this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || false;
-        this.queueOptions = this.options.queueOptions || {};
+        this.url = this.options.url || DEFAULT_URL;
+        this.queue = this.options.queue || DEFAULT_QUEUE;
+        this.prefetchCount = this.options.prefetchCount || DEFAULT_PREFETCH_COUNT;
+        this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || DEFAULT_IS_GLOBAL_PREFETCH_COUNT;
+        this.queueOptions = this.options.queueOptions || DEFAULT_QUEUE_OPTIONS;
         this.connect();
     }
 

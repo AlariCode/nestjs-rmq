@@ -2,6 +2,13 @@ import { Server, CustomTransportStrategy } from '@nestjs/microservices';
 import { Channel, Connection, Options } from 'amqplib';
 import { ServerOptions } from './server.interface';
 import { Observable } from 'rxjs';
+import { 
+    DEFAULT_IS_GLOBAL_PREFETCH_COUNT,
+    DEFAULT_PREFETCH_COUNT,
+    DEFAULT_QUEUE,
+    DEFAULT_QUEUE_OPTIONS,
+    DEFAULT_URL
+} from '../constants';
 import * as rqmPackage from 'amqplib';
 
 export class ServerRMQ extends Server implements CustomTransportStrategy {
@@ -15,11 +22,11 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
 
     constructor(private readonly options: ServerOptions) {
         super();
-        this.url = this.options.url || 'amqp://localhost';
-        this.queue = this.options.queue || 'default';
-        this.prefetchCount = this.options.prefetchCount || 0;
-        this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || false;
-        this.queueOptions = this.options.queueOptions || {};
+        this.url = this.options.url || DEFAULT_URL;
+        this.queue = this.options.queue || DEFAULT_QUEUE;
+        this.prefetchCount = this.options.prefetchCount || DEFAULT_PREFETCH_COUNT;
+        this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || DEFAULT_IS_GLOBAL_PREFETCH_COUNT;
+        this.queueOptions = this.options.queueOptions || DEFAULT_QUEUE_OPTIONS;
     }
 
     public async listen(callback: () => void): Promise<void> {
