@@ -47,7 +47,7 @@ export class ClientRMQ extends ClientProxy {
             const { content } = message;
             const { err, response, isDisposed } = JSON.parse(content.toString());
             if (isDisposed || err) {
-                callback({
+                return callback({
                     err,
                     response: null,
                     isDisposed: true,
