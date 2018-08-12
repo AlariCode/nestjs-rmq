@@ -1,4 +1,5 @@
 # NestJS - RabbitMQ custom stratagy
+![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/logo.jpg)
 
 This module is a custom strategy for NestJS microservice library. It allows you to use RabbitMQ as a transport for microservice messages. Learn about NestJS [here](https://nestjs.com).
 
@@ -26,13 +27,11 @@ async function bootstrap() {
 }
 ```
 Options are:
-option | type | description
---- | --- | ---
-url | string | Connection url to your RabbitMQ instance. It contains user, password and host.
-queue | string | Name of queue, your server will lusten to.
+**url** (string) - Connection url to your RabbitMQ instance. It contains user, password and host.
+**queue** (string) - Name of queue, your server will lusten to.
 prefetchCount | number | Number of prefetched messages. You can read more [here](https://github.com/postwait/node-amqp).
-isGlobalPrefetchCount | boolean | You can read more [here](https://github.com/postwait/node-amqp).
-queueOptions | object | Additional queue options. You can read more [here](https://github.com/postwait/node-amqp).
+**isGlobalPrefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
+**queueOptions** (object) - Additional queue options. You can read more [here](https://github.com/postwait/node-amqp).
 
 After initializing server you can use `@MessagePattern` in controllers as described in NestJS docs.
 
