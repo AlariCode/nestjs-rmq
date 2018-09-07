@@ -1,2 +1,2 @@
 export { ClientRMQ } from './client';
-export { ClientOptions } from './client.interface';
+export { IClientOptions } from './client.interface';

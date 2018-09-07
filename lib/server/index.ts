@@ -1,2 +1,2 @@
 export { ServerRMQ } from './server';
-export { ServerOptions } from './server.interface';
+export { IServerOptions } from './server.interface';

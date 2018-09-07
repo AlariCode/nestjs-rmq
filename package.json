@@ -1,11 +1,11 @@
 {
   "name": "nestjs-rmq",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "NestJS custom stratagy for RabbitMQ",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "scripts": {
-    "prepublish": "./node_modules/.bin/tsc -p tsconfig.json"
+    "prepublish": "rm -R ./dist && ./node_modules/.bin/tsc -p tsconfig.json"
   },
   "author": "Anton Larichev <antonlarichev@gmail.com>",
   "keywords": [
@@ -24,6 +24,7 @@
   "homepage": "https://github.com/AlariCode/nestjs-rmq",
   "dependencies": {
     "@nestjs/microservices": "5.0.0",
+    "amqp-connection-manager": "^2.1.1",
     "amqplib": "^0.5.2",
     "rxjs": "^6.0.0",
     "typescript": "^3.0.1"

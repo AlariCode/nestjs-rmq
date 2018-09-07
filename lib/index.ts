@@ -1,2 +1,2 @@
-export { ServerOptions, ServerRMQ } from './server';
-export { ClientOptions, ClientRMQ } from './client';
+export { IServerOptions, ServerRMQ } from './server';
+export { IClientOptions, ClientRMQ } from './client';

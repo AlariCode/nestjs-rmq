@@ -3,6 +3,10 @@
 
 This module is a custom strategy for NestJS microservice library. It allows you to use RabbitMQ as a transport for microservice messages. Learn about NestJS [here](https://nestjs.com).
 
+``` bash
+npm i new nestjs-rmq
+```
+
 To generate your microservice, just use @nestjs/cli:
 
 ``` bash
@@ -18,7 +22,7 @@ import { ServerRMQ } from 'nestjs-rmq';
 async function bootstrap() {
   const app = await NestFactory.createMicroservice(AppModule, {
     strategy: new ServerRMQ({
-      url: `amqp://${config.default.localhost.amqp.login}:${config.default.localhost.amqp.password}@${config.default.localhost.amqp.host}`,
+      urls: [`amqp://login:password@host`],
       queue: 'test',
       queueOptions: { durable: false }
     })
@@ -27,7 +31,7 @@ async function bootstrap() {
 }
 ```
 Options are:
-**url** (string) - Connection url to your RabbitMQ instance. It contains user, password and host.
+**urls** (string[]) - Connection urls to one or more RabbitMQ instance. Each url contains user, password and host.
 **queue** (string) - Name of queue, your server will lusten to.
 prefetchCount | number | Number of prefetched messages. You can read more [here](https://github.com/postwait/node-amqp).
 **isGlobalPrefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
@@ -42,6 +46,8 @@ test(data: string): string {
     return 'test' + data;
 }
 ```
+
+
 As for the clients, they have the same options:
 
 ``` javascript
@@ -50,7 +56,7 @@ import { ClientRMQ } from 'nestjs-rmq';
 //...
 
 client = new ClientRMQ({
-    url: `amqp://login:password@host`,
+    urls: [`amqp://login:password@host`],
     queue: 'test',
     queueOptions: { durable: false }
 });
@@ -64,3 +70,6 @@ a(): Observable<string> {
     return this.client.send<string, string>({ cmd: 'test' }, msg);
 }
 ```
+
+## Breaking changes from v0.1.0 to v0.1.1
+You need to use `urls` option instead of `url` and pass `string[]` instead of `string` for cluster support.

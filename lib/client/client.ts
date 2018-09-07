@@ -1,50 +1,94 @@
-import { Channel, Connection, Options } from 'amqplib';
+import { Options } from 'amqplib';
 import { ClientProxy } from '@nestjs/microservices';
-import { ClientOptions } from './client.interface';
+import { IClientOptions } from './client.interface';
 import { EventEmitter } from 'events';
-import { 
+import {
     DEFAULT_IS_GLOBAL_PREFETCH_COUNT,
     DEFAULT_PREFETCH_COUNT,
     DEFAULT_QUEUE,
     DEFAULT_QUEUE_OPTIONS,
-    DEFAULT_URL
+    DEFAULT_URL,
 } from '../constants';
-import * as rqmPackage from 'amqplib';
+import * as amqp from 'amqp-connection-manager';
 
 export class ClientRMQ extends ClientProxy {
-    private client: Connection = null;
-    private channel: Channel = null;
-    private url: string;
+    private client: any = null;
+    private channel: any = null;
+    private urls: string[];
     private queue: string;
     private prefetchCount: number;
     private isGlobalPrefetchCount: boolean;
-    private queueOptions: Options.AssertQueue
+    private queueOptions: Options.AssertQueue;
     private replyQueue: string;
     private responseEmitter: EventEmitter;
 
     constructor(
-        private readonly options: ClientOptions) {
+        private readonly options: IClientOptions) {
         super();
-        this.url = this.options.url || DEFAULT_URL;
+        this.urls = this.options.urls || [DEFAULT_URL];
         this.queue = this.options.queue || DEFAULT_QUEUE;
         this.prefetchCount = this.options.prefetchCount || DEFAULT_PREFETCH_COUNT;
         this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || DEFAULT_IS_GLOBAL_PREFETCH_COUNT;
         this.queueOptions = this.options.queueOptions || DEFAULT_QUEUE_OPTIONS;
-        this.connect();
     }
 
-    protected publish(messageObj, callback: (err, result, disposed?: boolean) => void) {
+    public close(): void {
+        this.channel && this.channel.close();
+        this.client && this.client.close();
+    }
+
+    public listen() {
+        this.channel.addSetup((channel) => {
+            return Promise.all([
+                channel.consume(this.replyQueue, (msg) => {
+                    this.responseEmitter.emit(msg.properties.correlationId, msg);
+                }, { noAck: true }),
+            ]);
+        });
+    }
+
+    public connect(): Promise<any> {
+        if (this.client && this.channel) {
+            return Promise.resolve();
+        }
+        return new Promise(async (resolve, reject) => {
+            this.client = amqp.connect(this.urls);
+            this.client.on('connect', x => {
+                this.channel = this.client.createChannel({
+                    json: false,
+                    setup: async (channel) => {
+                        await channel.assertQueue(this.queue, this.queueOptions);
+                        await channel.prefetch(this.prefetchCount, this.isGlobalPrefetchCount);
+                        this.replyQueue = (await channel.assertQueue('', { exclusive: true })).queue;
+                        this.responseEmitter = new EventEmitter();
+                        this.responseEmitter.setMaxListeners(0);
+                        this.listen();
+                        resolve();
+                    },
+                });
+            });
+            this.client.on('disconnect', err => {
+                reject(err);
+                this.client.close();
+                this.client = null;
+            });
+        });
+    }
+
+    protected async publish(messageObj, callback: (err, result, disposed?: boolean) => void) {
         try {
-            let correlationId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+            if (!this.client) {
+                await this.connect();
+            }
+            const correlationId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
             this.responseEmitter.on(correlationId, msg => {
                 this.handleMessage(msg, callback);
             });
             this.channel.sendToQueue(this.queue, Buffer.from(JSON.stringify(messageObj)), {
                 replyTo: this.replyQueue,
-                correlationId: correlationId
+                correlationId,
             });
         } catch (err) {
-            console.log(err);
             callback(err, null);
         }
     }
@@ -65,33 +109,5 @@ export class ClientRMQ extends ClientProxy {
                 response,
             });
         }
-    }
-
-    public close(): void {
-        this.channel && this.channel.close();
-        this.client && this.client.close();
-    }
-
-    public listen() {
-        this.channel.consume(this.replyQueue, (msg) => {
-            this.responseEmitter.emit(msg.properties.correlationId, msg);
-        }, { noAck: true });
-    }
-
-    public connect(): Promise<any> {
-        if (this.client && this.channel) {
-            return Promise.resolve();
-        }
-        return new Promise(async (resolve, reject) => {
-            this.client = await rqmPackage.connect(this.url);
-            this.channel = await this.client.createChannel();
-            await this.channel.assertQueue(this.queue, this.queueOptions);
-            await this.channel.prefetch(this.prefetchCount, this.isGlobalPrefetchCount);
-            this.replyQueue = (await this.channel.assertQueue('', { exclusive: true })).queue;
-            this.responseEmitter = new EventEmitter();
-            this.responseEmitter.setMaxListeners(0);
-            this.listen();
-            resolve();
-        });
     }
 }

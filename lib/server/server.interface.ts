@@ -1,7 +1,7 @@
 import { Options } from 'amqplib';
 
-export interface ServerOptions {
-    url?: string;
+export interface IServerOptions {
+    urls?: string[];
     queue?: string;
     prefetchCount?: number;
     isGlobalPrefetchCount?: boolean;

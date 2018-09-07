@@ -1,28 +1,28 @@
 import { Server, CustomTransportStrategy } from '@nestjs/microservices';
-import { Channel, Connection, Options } from 'amqplib';
-import { ServerOptions } from './server.interface';
+import { Options } from 'amqplib';
+import { IServerOptions } from './server.interface';
 import { Observable } from 'rxjs';
-import { 
+import {
     DEFAULT_IS_GLOBAL_PREFETCH_COUNT,
     DEFAULT_PREFETCH_COUNT,
     DEFAULT_QUEUE,
     DEFAULT_QUEUE_OPTIONS,
-    DEFAULT_URL
+    DEFAULT_URL,
 } from '../constants';
-import * as rqmPackage from 'amqplib';
+import * as amqp from 'amqp-connection-manager';
 
 export class ServerRMQ extends Server implements CustomTransportStrategy {
-    private server: Connection = null;
-    private channel: Channel = null;
-    private url: string;
+    private server: any = null;
+    private channel: any = null;
+    private urls: string[];
     private queue: string;
     private prefetchCount: number;
-    private queueOptions: Options.AssertQueue
+    private queueOptions: Options.AssertQueue;
     private isGlobalPrefetchCount: boolean;
 
-    constructor(private readonly options: ServerOptions) {
+    constructor(private readonly options: IServerOptions) {
         super();
-        this.url = this.options.url || DEFAULT_URL;
+        this.urls = this.options.urls || [DEFAULT_URL];
         this.queue = this.options.queue || DEFAULT_QUEUE;
         this.prefetchCount = this.options.prefetchCount || DEFAULT_PREFETCH_COUNT;
         this.isGlobalPrefetchCount = this.options.isGlobalPrefetchCount || DEFAULT_IS_GLOBAL_PREFETCH_COUNT;
@@ -31,26 +31,30 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
 
     public async listen(callback: () => void): Promise<void> {
         await this.start(callback);
-        this.channel.consume(this.queue, (msg) => this.handleMessage(msg), {
-            noAck: true,
-        });
-    }
-
-    private async start(callback?: () => void) {
-        try {
-            this.server = await rqmPackage.connect(this.url);
-            this.channel = await this.server.createChannel();
-            this.channel.assertQueue(this.queue, this.queueOptions);
-            await this.channel.prefetch(this.prefetchCount, this.isGlobalPrefetchCount);
-            callback();
-        } catch (err) {
-            this.logger.error(err);
-        }
     }
 
     public close(): void {
         this.channel && this.channel.close();
         this.server && this.server.close();
+    }
+
+    private async start(callback?: () => void) {
+        this.server = amqp.connect(this.urls);
+        this.server.on('connect', x => {
+            this.channel = this.server.createChannel({
+                json: false,
+                setup: async (channel) => {
+                    await channel.assertQueue(this.queue, this.queueOptions);
+                    await channel.prefetch(this.prefetchCount, this.isGlobalPrefetchCount);
+                    channel.consume(this.queue, (msg) => this.handleMessage(msg), { noAck: true });
+                    callback();
+                },
+            });
+        });
+
+        this.server.on('disconnect', err => {
+            this.logger.error('Disconnected from RMQ. Trying to reconnect');
+        });
     }
 
     private async handleMessage(message): Promise<void> {
@@ -68,6 +72,6 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
 
     private sendMessage(message, replyTo, correlationId): void {
         const buffer = Buffer.from(JSON.stringify(message));
-        this.channel.sendToQueue(replyTo, buffer, { correlationId: correlationId });
+        this.channel.sendToQueue(replyTo, buffer, { correlationId });
     }
 }
