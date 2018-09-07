@@ -4,7 +4,7 @@
 This module is a custom strategy for NestJS microservice library. It allows you to use RabbitMQ as a transport for microservice messages. Learn about NestJS [here](https://nestjs.com).
 
 ``` bash
-npm i new nestjs-rmq
+npm i nestjs-rmq
 ```
 
 To generate your microservice, just use @nestjs/cli:
