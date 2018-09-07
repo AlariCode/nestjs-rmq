@@ -17,7 +17,7 @@
     "type": "git",
     "url": "git@github.com:AlariCode/nestjs-rmq.git"
   },
-  "license": "ISC",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/AlariCode/nestjs-rmq/issues"
   },
