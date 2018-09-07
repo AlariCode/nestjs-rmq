@@ -1,4 +1,4 @@
-# NestJS - RabbitMQ custom stratagy
+# NestJS - RabbitMQ custom strategy
 ![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/logo.jpg)
 
 This module is a custom strategy for NestJS microservice library. It allows you to use RabbitMQ as a transport for microservice messages. Learn about NestJS [here](https://nestjs.com).
