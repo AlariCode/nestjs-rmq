@@ -8,6 +8,8 @@ import {
     DEFAULT_QUEUE,
     DEFAULT_QUEUE_OPTIONS,
     DEFAULT_URL,
+    CONNECT_EVENT,
+    DISCONNECT_EVENT,
 } from '../constants';
 import * as amqp from 'amqp-connection-manager';
 
@@ -53,7 +55,7 @@ export class ClientRMQ extends ClientProxy {
         }
         return new Promise(async (resolve, reject) => {
             this.client = amqp.connect(this.urls);
-            this.client.on('connect', x => {
+            this.client.on(CONNECT_EVENT, x => {
                 this.channel = this.client.createChannel({
                     json: false,
                     setup: async (channel) => {
@@ -67,7 +69,7 @@ export class ClientRMQ extends ClientProxy {
                     },
                 });
             });
-            this.client.on('disconnect', err => {
+            this.client.on(DISCONNECT_EVENT, err => {
                 reject(err);
                 this.client.close();
                 this.client = null;

@@ -1,4 +1,8 @@
 # Change log
+## v0.1.2
+- Added additional check for callback() function
+- Moved events to constants
+
 ## v0.1.1
 - Added reconnection in client and server, if your RabbitMQ instanse is down.
 - Support for multiple urls for cluster usage.

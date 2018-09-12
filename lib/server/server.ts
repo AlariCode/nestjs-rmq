@@ -8,6 +8,9 @@ import {
     DEFAULT_QUEUE,
     DEFAULT_QUEUE_OPTIONS,
     DEFAULT_URL,
+    CONNECT_EVENT,
+    DISCONNECT_EVENT,
+    DISCONNECT_MESSAGE,
 } from '../constants';
 import * as amqp from 'amqp-connection-manager';
 
@@ -29,7 +32,7 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
         this.queueOptions = this.options.queueOptions || DEFAULT_QUEUE_OPTIONS;
     }
 
-    public async listen(callback: () => void): Promise<void> {
+    public async listen(callback?: () => void): Promise<void> {
         await this.start(callback);
     }
 
@@ -40,20 +43,22 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
 
     private async start(callback?: () => void) {
         this.server = amqp.connect(this.urls);
-        this.server.on('connect', x => {
+        this.server.on(CONNECT_EVENT, x => {
             this.channel = this.server.createChannel({
                 json: false,
                 setup: async (channel) => {
                     await channel.assertQueue(this.queue, this.queueOptions);
                     await channel.prefetch(this.prefetchCount, this.isGlobalPrefetchCount);
                     channel.consume(this.queue, (msg) => this.handleMessage(msg), { noAck: true });
-                    callback();
+                    if (callback instanceof Function) {
+                      callback();
+                    }
                 },
             });
         });
 
-        this.server.on('disconnect', err => {
-            this.logger.error('Disconnected from RMQ. Trying to reconnect');
+        this.server.on(DISCONNECT_EVENT, err => {
+            this.logger.error(DISCONNECT_MESSAGE);
         });
     }
 
