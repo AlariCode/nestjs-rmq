@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { ServerRMQ } from '../lib/server';
 import * as sinon from 'sinon';
+import { EventEmitter } from 'events';
 
 const server = new ServerRMQ({});
 
@@ -37,6 +38,15 @@ describe('close()', () => {
     });
 });
 
-describe('start()', () => {
+describe('sendMessage()', () => {
+    beforeEach(() => {
+        (server as any).channel = {
+            sendToQueue: sinon.spy()
+        };
+    });
 
+    it('should send to queue', () => {
+        server['sendMessage']('', '', '');
+        expect((server as any).channel.sendToQueue.called).to.be.true;
+    });
 });

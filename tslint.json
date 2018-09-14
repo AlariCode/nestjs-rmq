@@ -11,7 +11,7 @@
         "newline-before-return": false,
         "no-angle-bracket-type-assertion": false,
         "eofline": false,
-        "object-literal-shorthand": false,
+        "object-literal-shorthand": true,
         "object-literal-sort-keys": false,
         "trailing-comma": [
             false
@@ -27,6 +27,7 @@
         "prefer-const": false,
         "triple-equals": false,
         "no-empty": false,
+        "no-string-literal": false,
         "prefer-for-of": false,
         "arrow-parens": false,
         "no-unused-expression": false,
