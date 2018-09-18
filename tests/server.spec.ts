@@ -1,7 +1,6 @@
 import { expect } from 'chai';
 import { ServerRMQ } from '../lib/server';
 import * as sinon from 'sinon';
-import { EventEmitter } from 'events';
 
 const server = new ServerRMQ({});
 
@@ -48,5 +47,33 @@ describe('sendMessage()', () => {
     it('should send to queue', () => {
         server['sendMessage']('', '', '');
         expect((server as any).channel.sendToQueue.called).to.be.true;
+    });
+});
+
+describe('handleMessage()', () => {
+    const message = {
+        content: JSON.stringify({
+            pattern: 'test',
+            data: 'testdata'
+        }),
+        properties: {
+            replyTo: 'testReply',
+            correlationId: 'testCorId'
+        },
+    };
+    beforeEach(() => {
+        (server as any).transformToObservable = sinon.spy();
+    });
+
+    it('should call handler if exists', () => {
+        (server as any).messageHandlers[JSON.stringify('test')] = sinon.spy();
+        server['handleMessage'](message);
+        expect((server as any).messageHandlers[JSON.stringify('test')].called).to.be.true;
+    });
+
+    it('should not call handler if not exists', () => {
+        (server as any).messageHandlers[JSON.stringify('tests')] = sinon.spy();
+        server['handleMessage'](message);
+        expect((server as any).messageHandlers[JSON.stringify('tests')].called).to.be.false;
     });
 });
