@@ -43,7 +43,7 @@ export class ServerRMQ extends Server implements CustomTransportStrategy {
 
     private async start(callback?: () => void) {
         this.server = amqp.connect(this.urls);
-        this.server.on(CONNECT_EVENT, x => {
+        this.server.on(CONNECT_EVENT, () => {
             this.channel = this.server.createChannel({
                 json: false,
                 setup: async (channel) => {
