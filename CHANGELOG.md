@@ -1,4 +1,7 @@
 # Change log
+## v0.1.3
+- Added peerDependencies
+
 ## v0.1.2
 - Added additional check for callback() function
 - Moved events to constants

@@ -1,6 +1,6 @@
 {
   "name": "nestjs-rmq",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "NestJS custom stratagy for RabbitMQ",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -46,5 +46,10 @@
     "tslint": "^5.8.0",
     "tslint-loader": "^3.5.3",
     "webpack": "2.7.0"
+  },
+  "peerDependencies": {
+    "@nestjs/microservices": "5.x",
+    "@nestjs/common": "5.x",
+    "@nestjs/core": "5.x"
   }
 }
