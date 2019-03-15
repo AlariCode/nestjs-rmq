@@ -7,6 +7,8 @@
 [![npm version](https://badgen.net/github/prs/AlariCode/nestjs-rmq)](https://github.com/AlariCode/nestjs-rmq/pulls)
 [![Build Status](https://travis-ci.org/AlariCode/nestjs-rmq.svg?branch=master)](https://travis-ci.org/AlariCode/nestjs-rmq)
 
+# Important! I optimized architecture and made library framework agnostic. Check out new library [here](https://github.com/AlariCode/rabbitmq-rpc).
+
 This module is a custom strategy for NestJS microservice library. It allows you to use RabbitMQ as a transport for microservice messages. Learn about NestJS [here](https://nestjs.com).
 
 To generate your microservice, just use @nestjs/cli:
