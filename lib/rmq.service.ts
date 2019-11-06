@@ -1,5 +1,4 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { ModuleState, moduleStateEmmiter } from './emmiters/module-state.emmiter';
+import { Injectable } from '@nestjs/common';
 import {
 	DISCONNECT_EVENT,
 	DISCONNECT_MESSAGE,
@@ -20,7 +19,6 @@ import { Message, Channel } from 'amqplib';
 import { Signale } from 'signale';
 import { ChannelWrapper, AmqpConnectionManager } from 'amqp-connection-manager';
 import { IRMQServiceOptions, IRMQConnection } from './interfaces/rmq-options.interface';
-import { IRMQRouter } from './interfaces/rmq-router.interface';
 import { responseEmitter, requestEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
 // tslint:disable-next-line: no-duplicate-imports
 import * as amqp from 'amqp-connection-manager';
@@ -28,7 +26,7 @@ import 'reflect-metadata';
 import { IQueueMeta } from './interfaces/queue-meta.interface';
 
 @Injectable()
-export class RMQService implements OnModuleInit {
+export class RMQService {
 	private server: AmqpConnectionManager = null;
 	private channel: ChannelWrapper = null;
 	private options: IRMQServiceOptions;
@@ -48,10 +46,6 @@ export class RMQService implements OnModuleInit {
 			types: CUSTOM_LOGS,
 		});
 		this.init();
-	}
-
-	onModuleInit() {
-		return RMQService;
 	}
 
 	public async init(): Promise<void> {
@@ -85,7 +79,7 @@ export class RMQService implements OnModuleInit {
 								this.replyInvalidRoute(msg);
 							}
 						},
-						{ noAck: true },
+						{ noAck: true }
 					);
 					this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
 					this.topics = this.topics ? this.topics : [];
@@ -97,16 +91,15 @@ export class RMQService implements OnModuleInit {
 				}
 				await channel.prefetch(
 					this.options.prefetchCount ? this.options.prefetchCount : 0,
-					this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false,
+					this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false
 				);
 				channel.consume(
 					this.replyQueue,
 					(msg: Message) => {
 						this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
 					},
-					{ noAck: true },
+					{ noAck: true }
 				);
-				moduleStateEmmiter.emit(ModuleState.ready);
 				this.listenReply();
 				this.logger.success(CONNECTED_MESSAGE);
 			},
@@ -123,7 +116,7 @@ export class RMQService implements OnModuleInit {
 			if (!this.server || !this.server.isConnected()) {
 				await this.init();
 			}
-			const correlationId = this.generateGuid();
+			const correlationId = this.getUniqId();
 			const timeout = this.options.messagesTimeout ? this.options.messagesTimeout : DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
 				reject(new Error(`${ERROR_TIMEOUT}: ${timeout}`));
@@ -190,11 +183,15 @@ export class RMQService implements OnModuleInit {
 			this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify({ error: ERROR_NO_ROUTE })), {
 				correlationId: msg.properties.correlationId,
 			});
-			this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify({ error: ERROR_NO_ROUTE })}`);
+			this.logger.sent(
+				`[${msg.fields.routingKey}] ${JSON.stringify({
+					error: ERROR_NO_ROUTE,
+				})}`
+			);
 		}
 	}
 
-	private generateGuid(): string {
+	private getUniqId(): string {
 		function s4() {
 			return Math.floor((1 + Math.random()) * 0x10000)
 				.toString(16)
