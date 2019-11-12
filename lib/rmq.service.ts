@@ -72,11 +72,12 @@ export class RMQService {
 					});
 					channel.consume(
 						this.options.queueName,
-						(msg: Message) => {
+						async (msg: Message) => {
 							if (this.isTopicExists(msg.fields.routingKey)) {
-								requestEmitter.emit(msg.fields.routingKey, this.useMiddleware(msg));
+								msg = await this.useMiddleware(msg);
+								requestEmitter.emit(msg.fields.routingKey, msg);
 							} else {
-								this.replyInvalidRoute(msg);
+								this.reply('', msg, new Error(ERROR_NO_ROUTE));
 							}
 						},
 						{ noAck: true }
@@ -159,36 +160,26 @@ export class RMQService {
 	}
 
 	private async listenReply(): Promise<void> {
-		responseEmitter.on(ResponseEmmiterResult.success, (msg, result) => {
-			this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
-			this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(result)), {
-				correlationId: msg.properties.correlationId,
-			});
-			this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(result)}`);
+		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
+			this.reply(result, msg);
 		});
-		responseEmitter.on(ResponseEmmiterResult.error, (msg, err) => {
-			this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
-			this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(''), {
-				correlationId: msg.properties.correlationId,
-				headers: {
-					'-x-error': err.message,
-				},
-			});
-			this.logger.error(`[${msg.fields.routingKey}] ${JSON.stringify(err.message)}`);
+		responseEmitter.on(ResponseEmmiterResult.error, async (msg, err) => {
+			this.reply('', msg, err);
 		});
 	}
 
-	private replyInvalidRoute(msg: Message) {
-		if (msg.properties.replyTo) {
-			this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify({ error: ERROR_NO_ROUTE })), {
-				correlationId: msg.properties.correlationId,
-			});
-			this.logger.sent(
-				`[${msg.fields.routingKey}] ${JSON.stringify({
-					error: ERROR_NO_ROUTE,
-				})}`
-			);
-		}
+	private async reply(res: any, msg: Message, error: Error = null) {
+		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
+		res = await this.intercept(res, msg, error);
+		this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
+			correlationId: msg.properties.correlationId,
+			headers: error
+				? {
+						'-x-error': error.message,
+				  }
+				: null,
+		});
+		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
 	private getUniqId(): string {
@@ -212,8 +203,18 @@ export class RMQService {
 			return msg;
 		}
 		for (const middleware of this.options.middleware) {
-			msg = await new middleware().transfrom(msg);
+			msg = await new middleware().transform(msg);
 		}
 		return msg;
+	}
+
+	private async intercept(res: any, msg: Message, error?: Error) {
+		if (!this.options.intercepters || this.options.intercepters.length === 0) {
+			return res;
+		}
+		for (const intercepter of this.options.intercepters) {
+			res = await new intercepter().intercept(res, msg, error);
+		}
+		return res;
 	}
 }

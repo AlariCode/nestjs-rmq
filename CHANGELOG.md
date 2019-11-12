@@ -1,5 +1,9 @@
 # Change log
 
+## 1.2.0
+
+-   Added global intercepters to deal with responses and errors
+
 ## 1.1.0
 
 -   Added @RMQPipe to transform messages

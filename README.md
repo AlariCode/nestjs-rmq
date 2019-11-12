@@ -39,7 +39,7 @@ import { RMQModule } from 'nestjs-rmq';
 export class AppModule {}
 ```
 
-In forRoot() you pass connection options =:
+In forRoot() you pass connection options:
 
 -   **exchangeName** (string) - Exchange that will be used to send messages to.
 -   **connections** (Object[]) - Array of connection parameters. You can use RQM cluster by using multiple connections.
@@ -71,15 +71,52 @@ Additionally, you can use optional parameters:
 -   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
 -   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
--   **middleware** (function) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`.
+-   **middleware** (array) - Array of middleware functions that implements `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
 
 ```javascript
-class LogMiddleware extends RMQPipeClass {
+class LogMiddleware implements RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		console.log(msg);
 		return msg;
 	}
 }
+```
+
+-   **intercepters** (array) - Array of intercepter functions that implements `RMQIntercepterClass` with one method `intercept`. They will be triggered before replying on any message. Trigger order is equal to array order.
+
+```javascript
+export class MyIntercepter implements RMQIntercepterClass {
+	async intercept(res: any, msg: Message, error: Error): Promise<any> {
+		// res - response body
+		// msg - initial message we are replying to
+		// error - error if exists or null
+		return res;
+	}
+}
+```
+
+Config example with middleware and intercepters:
+
+```javascript
+import { RMQModule } from 'nestjs-rmq';
+
+@Module({
+	imports: [
+		RMQModule.forRoot({
+			exchangeName: configService.get('AMQP_EXCHANGE'),
+			connections: [
+				{
+					login: configService.get('AMQP_LOGIN'),
+					password: configService.get('AMQP_PASSWORD'),
+					host: configService.get('AMQP_HOST'),
+				},
+			],
+			middleware: [LogMiddleware],
+			intercepters: [MyIntercepter],
+		}),
+	],
+})
+export class AppModule {}
 ```
 
 ## Sending messages
@@ -174,10 +211,10 @@ myMethod(numbers: number[]): number {
 }
 ```
 
-where `MyPipeClass` extends `RMQPipeClass` with one method `transform`:
+where `MyPipeClass` implements `RMQPipeClass` with one method `transform`:
 
 ```javascript
-class MyPipeClass extends RMQPipeClass {
+class MyPipeClass implements RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		// do something
 		return msg;

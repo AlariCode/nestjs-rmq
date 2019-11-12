@@ -1,4 +1,5 @@
 import { RMQPipeClass } from '../classes/rmq-pipe.class';
+import { RMQIntercepterClass } from '../classes/rmq-intercepter.class';
 
 export interface IRMQServiceOptions {
 	exchangeName: string;
@@ -15,6 +16,7 @@ export interface IRMQServiceOptions {
 	messagesTimeout?: number;
 	logMessages?: boolean;
 	middleware?: (typeof RMQPipeClass)[];
+	intercepters?: (typeof RMQIntercepterClass)[];
 }
 
 export interface IRMQConnection {

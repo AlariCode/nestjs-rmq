@@ -1,7 +1,8 @@
 import { Message } from 'amqplib';
 
+// tslint:disable-next-line: interface-name
 export class RMQPipeClass {
-	async transfrom(msg: Message): Promise<Message> {
+	async transform(msg: Message): Promise<Message> {
 		return msg;
 	}
 }
