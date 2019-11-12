@@ -208,7 +208,7 @@ export class RMQService {
 	}
 
 	private async useMiddleware(msg: Message) {
-		if (this.options.middleware && this.options.middleware.length === 0) {
+		if (!this.options.middleware || this.options.middleware.length === 0) {
 			return msg;
 		}
 		for (const middleware of this.options.middleware) {
