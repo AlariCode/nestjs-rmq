@@ -74,7 +74,7 @@ export class RMQService {
 						this.options.queueName,
 						(msg: Message) => {
 							if (this.isTopicExists(msg.fields.routingKey)) {
-								requestEmitter.emit(msg.fields.routingKey, msg);
+								requestEmitter.emit(msg.fields.routingKey, this.useMiddleware(msg));
 							} else {
 								this.replyInvalidRoute(msg);
 							}
@@ -205,5 +205,15 @@ export class RMQService {
 			return true;
 		}
 		return false;
+	}
+
+	private async useMiddleware(msg: Message) {
+		if (this.options.middleware && this.options.middleware.length === 0) {
+			return msg;
+		}
+		for (const middleware of this.options.middleware) {
+			msg = await new middleware().transfrom(msg);
+		}
+		return msg;
 	}
 }

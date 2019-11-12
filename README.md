@@ -71,6 +71,16 @@ Additionally, you can use optional parameters:
 -   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
 -   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
+-   **middleware** (function) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`.
+
+```javascript
+class LogMiddleware extends RMQPipeClass {
+	async transfrom(msg: Message): Promise<Message> {
+		console.log(msg);
+		return msg;
+	}
+}
+```
 
 ## Sending messages
 
@@ -149,6 +159,29 @@ myMethod(numbers: number[]): number {
 	//...
 	throw new Error('Error message')
 	//...
+}
+```
+
+## Using pipes
+
+To intercept any message to any route, you can use `@RMQPipe` decorator:
+
+```javascript
+@RMQPipe(MyPipeClass)
+@RMQRoute('my.rpc')
+myMethod(numbers: number[]): number {
+	//...
+}
+```
+
+where `MyPipeClass` extends `RMQPipeClass` with one method `transform`:
+
+```javascript
+class MyPipeClass extends RMQPipeClass {
+	async transfrom(msg: Message): Promise<Message> {
+		// do something
+		return msg;
+	}
 }
 ```
 

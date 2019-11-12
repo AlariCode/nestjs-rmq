@@ -1,3 +1,5 @@
+import { RMQPipeClass } from '../classes/rmq-pipe.class';
+
 export interface IRMQServiceOptions {
 	exchangeName: string;
 	connections: IRMQConnection[];
@@ -12,6 +14,7 @@ export interface IRMQServiceOptions {
 	reconnectTimeInSeconds?: number;
 	messagesTimeout?: number;
 	logMessages?: boolean;
+	middleware?: (typeof RMQPipeClass)[];
 }
 
 export interface IRMQConnection {

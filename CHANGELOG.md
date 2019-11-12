@@ -1,5 +1,10 @@
 # Change log
 
+## 1.1.0
+
+-   Added @RMQPipe to transform messages
+-   Added global middleware option
+
 ## 1.0.0
 
 -   Changed for new pattern
