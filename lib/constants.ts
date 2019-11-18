@@ -1,6 +1,4 @@
 export const RMQ_ROUTES_META: string = 'RMQ_ROUTES_META';
-export const RMQ_PIPE_META: string = 'RMQ_PIPE_META';
-export const VLIDATE_META: string = 'VLIDATE_META';
 export const CONNECT_EVENT: string = 'connect';
 export const DISCONNECT_EVENT: string = 'disconnect';
 export const DISCONNECT_MESSAGE: string = 'Disconnected from RMQ. Trying to reconnect';
