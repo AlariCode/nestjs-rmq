@@ -4,7 +4,7 @@ import { requestEmitter, responseEmitter, ResponseEmmiterResult } from '../emmit
 import { RMQService } from '../rmq.service';
 import { Message } from 'amqplib';
 
-export function RQMController(): ClassDecorator {
+export function RMQController(): ClassDecorator {
 	return function(target: any) {
 		let topics: IQueueMeta[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
 		topics = topics.filter(topic => topic.target === target.prototype);
