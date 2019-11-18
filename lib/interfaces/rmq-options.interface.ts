@@ -15,8 +15,8 @@ export interface IRMQServiceOptions {
 	reconnectTimeInSeconds?: number;
 	messagesTimeout?: number;
 	logMessages?: boolean;
-	middleware?: (typeof RMQPipeClass)[];
-	intercepters?: (typeof RMQIntercepterClass)[];
+	middleware?: typeof RMQPipeClass[];
+	intercepters?: typeof RMQIntercepterClass[];
 }
 
 export interface IRMQConnection {
