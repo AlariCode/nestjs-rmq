@@ -199,11 +199,44 @@ myMethod(numbers: number[]): number {
 }
 ```
 
+## Validating data
+
+NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
+
+```javascript
+import { RQMController, RMQRoute, Validate } from 'nestjs-rmq';
+
+@Validate()
+@RMQRoute('my.rpc')
+myMethod(data: myClass): number {
+	//...
+}
+```
+
+Where `myClass` is data class with validation decorators:
+
+```javascript
+import { IsString, MinLength, IsNumber } from 'class-validator';
+
+export class myClass {
+	@MinLength(2)
+	@IsString()
+	name: string;
+
+	@IsNumber()
+	age: string;
+}
+```
+
+If your input data will be invalid, the library will send back an error without even entering your method. This will prevent you from manually validating your data inside route. You can check all available validators [here](https://github.com/typestack/class-validator).
+
 ## Using pipes
 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
 ```javascript
+import { RQMController, RMQRoute, RMQPipe } from 'nestjs-rmq';
+
 @RMQPipe(MyPipeClass)
 @RMQRoute('my.rpc')
 myMethod(numbers: number[]): number {

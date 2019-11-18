@@ -1,5 +1,9 @@
 # Change log
 
+## 1.3.0
+
+-   Added validation decorator.
+
 ## 1.2.0
 
 -   Added global intercepters to deal with responses and errors
