@@ -66,29 +66,7 @@ export class RMQService {
 					durable: this.options.isExchangeDurable ? this.options.isExchangeDurable : true,
 				});
 				if (this.options.queueName) {
-					await channel.assertQueue(this.options.queueName, {
-						durable: this.options.isQueueDurable ? this.options.isQueueDurable : true,
-						arguments: this.options.queueArguments ? this.options.queueArguments : {},
-					});
-					channel.consume(
-						this.options.queueName,
-						async (msg: Message) => {
-							if (this.isTopicExists(msg.fields.routingKey)) {
-								msg = await this.useMiddleware(msg);
-								requestEmitter.emit(msg.fields.routingKey, msg);
-							} else {
-								this.reply('', msg, new Error(ERROR_NO_ROUTE));
-							}
-						},
-						{ noAck: true }
-					);
-					this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-					this.topics = this.topics ? this.topics : [];
-					if (this.topics.length > 0) {
-						this.topics.map(async topic => {
-							await channel.bindQueue(this.options.queueName, this.options.exchangeName, topic.topic);
-						});
-					}
+					this.listen(channel);
 				}
 				await channel.prefetch(
 					this.options.prefetchCount ? this.options.prefetchCount : 0,
@@ -157,6 +135,32 @@ export class RMQService {
 		this.sendResponseEmitter.removeAllListeners();
 		await this.channel.close();
 		await this.server.close();
+	}
+
+	private async listen(channel: Channel) {
+		await channel.assertQueue(this.options.queueName, {
+			durable: this.options.isQueueDurable ? this.options.isQueueDurable : true,
+			arguments: this.options.queueArguments ? this.options.queueArguments : {},
+		});
+		channel.consume(
+			this.options.queueName,
+			async (msg: Message) => {
+				if (this.isTopicExists(msg.fields.routingKey)) {
+					msg = await this.useMiddleware(msg);
+					requestEmitter.emit(msg.fields.routingKey, msg);
+				} else {
+					this.reply('', msg, new Error(ERROR_NO_ROUTE));
+				}
+			},
+			{ noAck: true }
+		);
+		this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		this.topics = this.topics ? this.topics : [];
+		if (this.topics.length > 0) {
+			this.topics.map(async topic => {
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, topic.topic);
+			});
+		}
 	}
 
 	private async listenReply(): Promise<void> {
