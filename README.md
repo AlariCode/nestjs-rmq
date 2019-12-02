@@ -1,6 +1,6 @@
 # NestJS - RabbitMQ custom strategy
 
-![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/logo.jpg)
+![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/new-logo.jpg)
 
 **More NestJS libs on [alariblog.ru](https://alariblog.ru)**
 
