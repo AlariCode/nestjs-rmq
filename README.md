@@ -2,6 +2,8 @@
 
 ![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/logo.jpg)
 
+**More NestJS libs on [alariblog.ru](https://alariblog.ru)**
+
 [![npm version](https://badgen.net/npm/v/nestjs-rmq)](https://www.npmjs.com/package/nestjs-rmq)
 [![npm version](https://badgen.net/npm/license/nestjs-rmq)](https://www.npmjs.com/package/nestjs-rmq)
 [![npm version](https://badgen.net/github/open-issues/AlariCode/nestjs-rmq)](https://github.com/AlariCode/nestjs-rmq/issues)
