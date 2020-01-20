@@ -44,7 +44,7 @@ export class AppModule {}
 In forRoot() you pass connection options:
 
 -   **exchangeName** (string) - Exchange that will be used to send messages to.
--   **connections** (Object[]) - Array of connection parameters. You can use RQM cluster by using multiple connections.
+-   **connections** (Object[]) - Array of connection parameters. You can use RMQ cluster by using multiple connections.
 
 Additionally, you can use optional parameters:
 
@@ -163,10 +163,10 @@ This method returns a Promise.
 
 ## Recieving messages
 
-To listen for messages bind your controller methods to subscription topics with **RMQRoute()** decorator and you controller to **@RQMController()**:
+To listen for messages bind your controller methods to subscription topics with **RMQRoute()** decorator and you controller to **@RMQController()**:
 
 ```javascript
-@RQMController()
+@RMQController()
 export class AppController {
 	//...
 
@@ -206,7 +206,7 @@ myMethod(numbers: number[]): number {
 NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
 
 ```javascript
-import { RQMController, RMQRoute, Validate } from 'nestjs-rmq';
+import { RMQController, RMQRoute, Validate } from 'nestjs-rmq';
 
 @Validate()
 @RMQRoute('my.rpc')
@@ -237,7 +237,7 @@ If your input data will be invalid, the library will send back an error without 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
 ```javascript
-import { RQMController, RMQRoute, RMQPipe } from 'nestjs-rmq';
+import { RMQController, RMQRoute, RMQPipe } from 'nestjs-rmq';
 
 @RMQPipe(MyPipeClass)
 @RMQRoute('my.rpc')
