@@ -1,5 +1,9 @@
 # Change log
 
+## 1.3.3
+
+-   Fixed no RMQRoute issue, added error message
+
 ## 1.3.0
 
 -   Added validation decorator.
