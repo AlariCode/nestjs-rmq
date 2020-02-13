@@ -139,8 +139,8 @@ export class RMQService {
 
 	private async listen(channel: Channel) {
 		await channel.assertQueue(this.options.queueName, {
-			durable: this.options.isQueueDurable ? this.options.isQueueDurable : true,
-			arguments: this.options.queueArguments ? this.options.queueArguments : {},
+			durable: this.options.isQueueDurable || true,
+			arguments: this.options.queueArguments || {},
 		});
 		channel.consume(
 			this.options.queueName,
