@@ -6,7 +6,7 @@ import { Signale } from 'signale';
 import { Message } from 'amqplib';
 
 export function RMQController(): ClassDecorator {
-	return function (target: any) {
+	return function(target: any) {
 		const logger = new Signale({
 			config: {
 				displayTimestamp: true,
@@ -19,7 +19,7 @@ export function RMQController(): ClassDecorator {
 		if (topics.length === 0) {
 			logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
-		target = class extends (target as { new(...args): any }) {
+		target = class extends (target as { new (...args): any }) {
 			constructor(...args: any) {
 				super(...args);
 				topics.forEach(async topic => {
