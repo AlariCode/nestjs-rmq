@@ -6,7 +6,7 @@ import { Signale } from 'signale';
 import { Message } from 'amqplib';
 
 export function RMQController(): ClassDecorator {
-	return function(target: any) {
+	return function (target: any) {
 		const logger = new Signale({
 			config: {
 				displayTimestamp: true,
@@ -16,7 +16,7 @@ export function RMQController(): ClassDecorator {
 		});
 		let topics: IQueueMeta[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
 		topics = topics ? topics.filter(topic => topic.target === target.prototype) : [];
-		if(topics.length === 0) {
+		if (topics.length === 0) {
 			logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
 		target = class extends (target as { new(...args): any }) {
@@ -30,6 +30,9 @@ export function RMQController(): ClassDecorator {
 								responseEmitter.emit(ResponseEmmiterResult.success, msg, result);
 							}
 						} catch (err) {
+							if (this.onError) {
+								this.onError(msg, err);
+							}
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
 							}

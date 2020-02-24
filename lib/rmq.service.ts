@@ -179,8 +179,9 @@ export class RMQService {
 			correlationId: msg.properties.correlationId,
 			headers: error
 				? {
-						'-x-error': error.message,
-				  }
+					'-x-error': error.message,
+					'-x-status-code': error.statusCode
+				}
 				: null,
 		});
 		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
