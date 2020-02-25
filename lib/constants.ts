@@ -14,6 +14,7 @@ export const ERROR_TIMEOUT: string = 'Response timeout error';
 
 export const DEFAULT_RECONNECT_TIME: number = 5;
 export const DEFAULT_TIMEOUT: number = 30000;
+export const DEFAULT_ERROR_CODE: number = 268435456;
 
 export const CUSTOM_LOGS = {
 	recieved: {

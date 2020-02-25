@@ -12,7 +12,7 @@ import {
 	ERROR_TIMEOUT,
 	DEFAULT_TIMEOUT,
 	CUSTOM_LOGS,
-	RMQ_ROUTES_META,
+	RMQ_ROUTES_META, DEFAULT_ERROR_CODE,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Message, Channel } from 'amqplib';
@@ -24,6 +24,7 @@ import { responseEmitter, requestEmitter, ResponseEmmiterResult } from './emmite
 import * as amqp from 'amqp-connection-manager';
 import 'reflect-metadata';
 import { IQueueMeta } from './interfaces/queue-meta.interface';
+import { RMQError } from './classes/rmq-error.class';
 
 @Injectable()
 export class RMQService {
@@ -104,7 +105,10 @@ export class RMQService {
 				clearTimeout(timerId);
 				const { content } = msg;
 				if (msg.properties.headers['-x-error']) {
-					reject(new Error(msg.properties.headers['-x-error']));
+					reject(new RMQError(
+						msg.properties.headers['-x-error'],
+						msg.properties.headers['-x-status-code'] ?? DEFAULT_ERROR_CODE
+					));
 				}
 				if (content.toString()) {
 					this.logger.recieved(`[${topic}] ${content.toString()}`);
@@ -172,7 +176,7 @@ export class RMQService {
 		});
 	}
 
-	private async reply(res: any, msg: Message, error: Error = null) {
+	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 		res = await this.intercept(res, msg, error);
 		this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
@@ -180,6 +184,7 @@ export class RMQService {
 			headers: error
 				? {
 						'-x-error': error.message,
+						'-x-status-code': this.isRMQError(error) ? error.statusCode : DEFAULT_ERROR_CODE
 				  }
 				: null,
 		});
@@ -220,5 +225,9 @@ export class RMQService {
 			res = await new intercepter().intercept(res, msg, error);
 		}
 		return res;
+	}
+
+	private isRMQError(error: Error | RMQError): error is RMQError {
+		return (error as RMQError).statusCode !== undefined;
 	}
 }

@@ -1,5 +1,9 @@
 # Change log
 
+## 1.4.0
+
+-   Added -x-status-code and RMQError class
+
 ## 1.3.3
 
 -   Fixed no RMQRoute issue, added error message

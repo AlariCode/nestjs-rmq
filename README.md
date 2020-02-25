@@ -145,9 +145,13 @@ This method returns a Promise. First type - is a type you send, and the second -
     To get a reply:
 
 ```javascript
-this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3]).then(reply => {
-	//...
-});
+this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3])
+    .then(reply => {
+        //...
+    })
+    .catch(error: RMQError => {
+        //...
+    });
 ```
 
 If you want to just notify services:
@@ -190,13 +194,14 @@ this.rmqService.send('sum.rpc', [1, 2, 3]).then(reply => {
 });
 ```
 
-Each '@RMQRoute' topic will be automatically bound to queue specified in 'queueName' option. If you want to return an Error just throw it in your method:
+Each '@RMQRoute' topic will be automatically bound to queue specified in 'queueName' option. If you want to return an Error just throw it in your method. To set '-x-status-code' use custom RMQError class.
 
 ```javascript
 @RMQRoute('my.rpc')
 myMethod(numbers: number[]): number {
 	//...
-	throw new Error('Error message')
+    throw new RMQError('Error message', 2);
+	throw new Error('Error message');
 	//...
 }
 ```

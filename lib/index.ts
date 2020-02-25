@@ -6,4 +6,5 @@ export * from './decorators/rmq-pipe.decorator';
 export * from './decorators/validate.decorator';
 export * from './classes/rmq-pipe.class';
 export * from './classes/rmq-intercepter.class';
+export * from './classes/rmq-error.class';
 export { Message } from 'amqplib';
