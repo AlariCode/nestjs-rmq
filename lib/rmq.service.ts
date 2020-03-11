@@ -54,12 +54,12 @@ export class RMQService {
 		const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 		});
-		const connectionOptins = {
+		const connectionOptions = {
 			reconnectTimeInSeconds: this.options.reconnectTimeInSeconds
 				? this.options.reconnectTimeInSeconds
 				: DEFAULT_RECONNECT_TIME,
 		};
-		this.server = amqp.connect(connectionURLs, connectionOptins);
+		this.server = amqp.connect(connectionURLs, connectionOptions);
 		this.channel = this.server.createChannel({
 			json: false,
 			setup: async (channel: Channel) => {
@@ -153,7 +153,7 @@ export class RMQService {
 					this.reply('', msg, new Error(ERROR_NO_ROUTE));
 				}
 			},
-			{ noAck: true }
+			{ noAck: false }
 		);
 		this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
 		this.topics = this.topics ? this.topics : [];
@@ -185,6 +185,7 @@ export class RMQService {
 				  }
 				: null,
 		});
+		this.channel.ack(msg);
 		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 

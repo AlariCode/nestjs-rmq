@@ -1,5 +1,8 @@
 # Change log
 
+## 1.4.3
+-   Added message ack
+
 ## 1.4.0
 
 -   Added -x-status-code and RMQError class
