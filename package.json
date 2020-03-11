@@ -1,6 +1,6 @@
 {
 	"name": "nestjs-rmq",
-	"version": "1.4.1",
+	"version": "1.4.2",
 	"description": "NestJS RabbitMQ Module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
@@ -25,7 +25,7 @@
 	},
 	"homepage": "https://github.com/AlariCode/nestjs-rmq",
 	"dependencies": {
-		"amqp-connection-manager": "^3.0.0",
+		"amqp-connection-manager": "^3.2.0",
 		"amqplib": "^0.5.5",
 		"class-validator": "^0.11.0",
 		"reflect-metadata": "^0.1.13",

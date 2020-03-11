@@ -93,9 +93,6 @@ export class RMQService {
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
-			if (!this.server || !this.server.isConnected()) {
-				await this.init();
-			}
 			const correlationId = this.getUniqId();
 			const timeout = this.options.messagesTimeout ? this.options.messagesTimeout : DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
