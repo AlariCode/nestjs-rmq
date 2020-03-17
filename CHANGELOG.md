@@ -1,5 +1,8 @@
 # Change log
 
+## 1.4.4
+-   Fix await consuming replyQueue
+
 ## 1.4.3
 -   Added message ack
 

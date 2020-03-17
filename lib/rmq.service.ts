@@ -73,7 +73,7 @@ export class RMQService {
 					this.options.prefetchCount ? this.options.prefetchCount : 0,
 					this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false
 				);
-				channel.consume(
+				await channel.consume(
 					this.replyQueue,
 					(msg: Message) => {
 						this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
@@ -114,7 +114,7 @@ export class RMQService {
 					reject(new Error(ERROR_NONE_RPC));
 				}
 			});
-			this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
 				correlationId,
 			});
@@ -143,7 +143,7 @@ export class RMQService {
 			durable: this.options.isQueueDurable || true,
 			arguments: this.options.queueArguments || {},
 		});
-		channel.consume(
+		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
 				if (this.isTopicExists(msg.fields.routingKey)) {
@@ -176,7 +176,7 @@ export class RMQService {
 	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 		res = await this.intercept(res, msg, error);
-		this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
+		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
 			headers: error
 				? {
