@@ -2,7 +2,7 @@ export class RMQTransportError extends Error {
 	message: string;
 
 	/* Your custom error code */
-	code?: number;
+	code?: string;
 
 	/* Error custom data */
 	data?: any;
@@ -13,7 +13,7 @@ export class RMQTransportError extends Error {
 	/* Host name */
 	host?: string;
 
-	constructor(message: string, code?: number, data?: any, service?: string, host?: string) {
+	constructor(message: string, code?: string, data?: any, service?: string, host?: string) {
 		super();
 		Object.setPrototypeOf(this, new.target.prototype);
 		this.code = code;
