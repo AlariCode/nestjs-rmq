@@ -1,5 +1,4 @@
-export class RMQError extends Error {
-	
+export class RMQTransportError extends Error {
 	message: string;
 
 	/* Your custom error code */
@@ -7,10 +6,10 @@ export class RMQError extends Error {
 
 	/* Error custom data */
 	data?: any;
-	
+
 	/* Service custon name */
 	service?: string;
-	
+
 	/* Host name */
 	host?: string;
 

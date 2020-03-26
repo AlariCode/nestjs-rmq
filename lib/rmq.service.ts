@@ -12,7 +12,9 @@ import {
 	ERROR_TIMEOUT,
 	DEFAULT_TIMEOUT,
 	CUSTOM_LOGS,
-	RMQ_ROUTES_META, DEFAULT_ERROR_CODE,
+	RMQ_ROUTES_META,
+	DEFAULT_ERROR_CODE,
+	ERROR_TYPE,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Message, Channel } from 'amqplib';
@@ -25,6 +27,9 @@ import * as amqp from 'amqp-connection-manager';
 import 'reflect-metadata';
 import { IQueueMeta } from './interfaces/queue-meta.interface';
 import { RMQError } from './classes/rmq-error.class';
+import { RMQTransportError } from './classes/rmq-transport-error.class';
+import { RMQErrorHandler } from './classes/rmq-error-handler.class';
+import { hostname } from 'os';
 
 @Injectable()
 export class RMQService {
@@ -96,22 +101,19 @@ export class RMQService {
 			const correlationId = this.getUniqId();
 			const timeout = this.options.messagesTimeout ? this.options.messagesTimeout : DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
-				reject(new Error(`${ERROR_TIMEOUT}: ${timeout}`));
+				reject(new RMQTransportError(`${ERROR_TIMEOUT}: ${timeout}`));
 			}, timeout);
 			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
 				const { content } = msg;
-				if (msg.properties.headers['-x-error']) {
-					reject(new RMQError(
-						msg.properties.headers['-x-error'],
-						msg.properties.headers['-x-status-code'] ?? DEFAULT_ERROR_CODE
-					));
+				if (msg.properties.headers['-x-error-message']) {
+					reject(this.errorHandler(msg));
 				}
 				if (content.toString()) {
 					this.logger.recieved(`[${topic}] ${content.toString()}`);
 					resolve(JSON.parse(content.toString()));
 				} else {
-					reject(new Error(ERROR_NONE_RPC));
+					reject(new RMQTransportError(ERROR_NONE_RPC));
 				}
 			});
 			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
@@ -150,7 +152,7 @@ export class RMQService {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
 				} else {
-					this.reply('', msg, new Error(ERROR_NO_ROUTE));
+					this.reply('', msg, new RMQTransportError(ERROR_NO_ROUTE));
 				}
 			},
 			{ noAck: false }
@@ -173,17 +175,14 @@ export class RMQService {
 		});
 	}
 
-	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
+	private async reply(res: any, msg: Message, error: RMQTransportError | RMQError = null) {
 		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 		res = await this.intercept(res, msg, error);
 		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
-			headers: error
-				? {
-						'-x-error': error.message,
-						'-x-status-code': this.isRMQError(error) ? error.statusCode : DEFAULT_ERROR_CODE
-				  }
-				: null,
+			headers: {
+				...this.buildError(error),
+			},
 		});
 		this.channel.ack(msg);
 		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
@@ -226,6 +225,43 @@ export class RMQService {
 	}
 
 	private isRMQError(error: Error | RMQError): error is RMQError {
-		return (error as RMQError).statusCode !== undefined;
+		return (error as RMQError).code !== undefined;
+	}
+
+	private buildError(error: RMQTransportError | RMQError) {
+		if (!error) {
+			return null;
+		}
+
+		let errorHeaders = {};
+		errorHeaders['-x-error-message'] = error.message;
+		errorHeaders['-x-error-host'] = hostname();
+		errorHeaders['-x-error-service'] = this.options.serviceName;
+
+		if (this.isRMQError(error)) {
+			errorHeaders = {
+				...errorHeaders,
+				'-x-error-code': (error as RMQError).code,
+				'-x-error-data': (error as RMQError).data,
+				'-x-error-type': ERROR_TYPE.RMQ,
+			};
+		} else {
+			errorHeaders = {
+				...errorHeaders,
+				'-x-error-type': ERROR_TYPE.TRANSPORT,
+			};
+		}
+
+		return errorHeaders;
+	}
+
+	private errorHandler(msg: Message): any {
+		const { headers } = msg.properties;
+
+		if (this.options.errorHandler) {
+			return this.options.errorHandler.handle(headers);
+		}
+
+		return RMQErrorHandler.handle(headers);
 	}
 }
