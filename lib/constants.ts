@@ -10,6 +10,7 @@ export const ERROR_NONE_RPC: string = 'This is none RPC queue. Use notify() meth
 // tslint:disable-next-line: quotemark
 export const ERROR_NO_ROUTE: string = "Requested service doesn't have RMQRoute with this path";
 export const ERROR_NO_ROUTE_FOR_CONTROLLER: string = 'No RMQRoute specified for controller';
+export const ERROR_UNDEFINED_FROM_RPC: string = 'RPC method returned undefined';
 export const ERROR_TIMEOUT: string = 'Response timeout error';
 
 export const DEFAULT_RECONNECT_TIME: number = 5;

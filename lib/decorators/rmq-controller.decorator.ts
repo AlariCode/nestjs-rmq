@@ -1,9 +1,15 @@
-import { ERROR_NO_ROUTE_FOR_CONTROLLER, RMQ_ROUTES_META } from '../constants';
+import {
+	DEFAULT_ERROR_CODE,
+	ERROR_NO_ROUTE_FOR_CONTROLLER,
+	ERROR_UNDEFINED_FROM_RPC,
+	RMQ_ROUTES_META,
+} from '../constants';
 import { IQueueMeta } from '../interfaces/queue-meta.interface';
 import { requestEmitter, responseEmitter, ResponseEmmiterResult } from '../emmiters/router.emmiter';
 import { RMQService } from '../rmq.service';
 import { Signale } from 'signale';
 import { Message } from 'amqplib';
+import { RMQError } from '..';
 
 export function RMQController(): ClassDecorator {
 	return function(target: any) {
@@ -26,8 +32,16 @@ export function RMQController(): ClassDecorator {
 					requestEmitter.on(topic.topic, async (msg: Message) => {
 						try {
 							const result = await this[topic.methodName](JSON.parse(msg.content.toString()));
-							if (msg.properties.replyTo) {
+							if (msg.properties.replyTo && result) {
 								responseEmitter.emit(ResponseEmmiterResult.success, msg, result);
+							} else if(msg.properties.replyTo && result === undefined) {
+								responseEmitter.emit(
+									ResponseEmmiterResult.error,
+									msg,
+									new RMQError(ERROR_UNDEFINED_FROM_RPC, DEFAULT_ERROR_CODE)
+								);
+							} else {
+								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						} catch (err) {
 							if (msg.properties.replyTo) {
