@@ -71,9 +71,6 @@ export class RMQService {
 				await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
 					durable: this.options.isExchangeDurable ? this.options.isExchangeDurable : true,
 				});
-				if (this.options.queueName) {
-					this.listen(channel);
-				}
 				await channel.prefetch(
 					this.options.prefetchCount ? this.options.prefetchCount : 0,
 					this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false
@@ -86,6 +83,9 @@ export class RMQService {
 					{ noAck: true }
 				);
 				this.listenReply();
+				if (this.options.queueName) {
+					this.listen(channel);
+				}
 				this.logger.success(CONNECTED_MESSAGE);
 			},
 		});
@@ -145,9 +145,17 @@ export class RMQService {
 			durable: this.options.isQueueDurable || true,
 			arguments: this.options.queueArguments || {},
 		});
+		this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		this.topics = this.topics ? this.topics : [];
+		if (this.topics.length > 0) {
+			this.topics.map(async topic => {
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, topic.topic);
+			});
+		}
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
+				this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 				if (this.isTopicExists(msg.fields.routingKey)) {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
@@ -157,13 +165,6 @@ export class RMQService {
 			},
 			{ noAck: false }
 		);
-		this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-		this.topics = this.topics ? this.topics : [];
-		if (this.topics.length > 0) {
-			this.topics.map(async topic => {
-				await channel.bindQueue(this.options.queueName, this.options.exchangeName, topic.topic);
-			});
-		}
 	}
 
 	private async listenReply(): Promise<void> {
@@ -172,6 +173,9 @@ export class RMQService {
 		});
 		responseEmitter.on(ResponseEmmiterResult.error, async (msg, err) => {
 			this.reply('', msg, err);
+		});
+		responseEmitter.on(ResponseEmmiterResult.ack, async (msg) => {
+			this.channel.ack(msg);
 		});
 	}
 
@@ -198,10 +202,7 @@ export class RMQService {
 	}
 
 	private isTopicExists(topic: string): boolean {
-		if (this.topics.find(x => x.topic === topic)) {
-			return true;
-		}
-		return false;
+		return !!this.topics.find(x => x.topic === topic);
 	}
 
 	private async useMiddleware(msg: Message) {

@@ -1,5 +1,11 @@
 # Change log
 
+## 1.4.6
+-   Fixed ack none RPC messages
+-   Fixed logs
+-   Fixed connection with messages already in queue
+-   Added error if RPC method returns undefined
+
 ## 1.4.4
 -   Fix await consuming replyQueue
 

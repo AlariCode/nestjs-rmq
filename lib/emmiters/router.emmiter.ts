@@ -9,4 +9,5 @@ responseEmitter.setMaxListeners(0);
 export enum ResponseEmmiterResult {
 	success = 'success',
 	error = 'error',
+	ack = 'ack'
 }
