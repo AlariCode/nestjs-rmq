@@ -4,23 +4,23 @@ import { RMQError } from './rmq-error.class';
 
 export class RMQErrorHandler {
 	public static handle(headers: any): any {
-		switch (headers['-x-error-type']) {
+		switch (headers['-x-type']) {
 			case ERROR_TYPE.TRANSPORT:
 				return new RMQTransportError(
-					headers['-x-error-message'],
-					headers['-x-error-code'],
-					headers['-x-error-data'],
-					headers['-x-error-service'],
-					headers['-x-error-host']
+					headers['-x-error'],
+					headers['-x-status-code'],
+					headers['-x-data'],
+					headers['-x-service'],
+					headers['-x-host']
 				);
 				break;
 			case ERROR_TYPE.RMQ:
 				return new RMQError(
-					headers['-x-error-message'],
-					headers['-x-error-code'],
-					headers['-x-error-data'],
-					headers['-x-error-service'],
-					headers['-x-error-host']
+					headers['-x-error'],
+					headers['-x-status-code'],
+					headers['-x-data'],
+					headers['-x-service'],
+					headers['-x-host']
 				);
 				break;
 		}

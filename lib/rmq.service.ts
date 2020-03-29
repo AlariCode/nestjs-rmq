@@ -13,7 +13,6 @@ import {
 	DEFAULT_TIMEOUT,
 	CUSTOM_LOGS,
 	RMQ_ROUTES_META,
-	DEFAULT_ERROR_CODE,
 	ERROR_TYPE,
 } from './constants';
 import { EventEmitter } from 'events';
@@ -235,21 +234,21 @@ export class RMQService {
 		}
 
 		let errorHeaders = {};
-		errorHeaders['-x-error-message'] = error.message;
-		errorHeaders['-x-error-host'] = hostname();
-		errorHeaders['-x-error-service'] = this.options.serviceName;
+		errorHeaders['-x-error'] = error.message;
+		errorHeaders['-x-host'] = hostname();
+		errorHeaders['-x-service'] = this.options.serviceName;
 
 		if (this.isRMQError(error)) {
 			errorHeaders = {
 				...errorHeaders,
-				'-x-error-code': (error as RMQError).code,
-				'-x-error-data': (error as RMQError).data,
-				'-x-error-type': ERROR_TYPE.RMQ,
+				'-x-status-code': (error as RMQError).code,
+				'-x-data': (error as RMQError).data,
+				'-x-type': ERROR_TYPE.RMQ,
 			};
 		} else {
 			errorHeaders = {
 				...errorHeaders,
-				'-x-error-type': ERROR_TYPE.TRANSPORT,
+				'-x-type': ERROR_TYPE.TRANSPORT,
 			};
 		}
 

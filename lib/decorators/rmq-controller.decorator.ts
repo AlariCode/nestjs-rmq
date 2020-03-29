@@ -1,5 +1,4 @@
 import {
-	DEFAULT_ERROR_CODE,
 	ERROR_NO_ROUTE_FOR_CONTROLLER,
 	ERROR_UNDEFINED_FROM_RPC,
 	RMQ_ROUTES_META,
@@ -38,7 +37,7 @@ export function RMQController(): ClassDecorator {
 								responseEmitter.emit(
 									ResponseEmmiterResult.error,
 									msg,
-									new RMQError(ERROR_UNDEFINED_FROM_RPC, DEFAULT_ERROR_CODE)
+									new RMQError(ERROR_UNDEFINED_FROM_RPC)
 								);
 							} else {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
