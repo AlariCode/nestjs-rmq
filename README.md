@@ -74,6 +74,7 @@ Additionally, you can use optional parameters:
 -   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
 -   **middleware** (array) - Array of middleware functions that implements `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
+-   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that implements `RMQErrorHandler`:
 
 ```javascript
 class LogMiddleware implements RMQPipeClass {
@@ -259,6 +260,25 @@ class MyPipeClass implements RMQPipeClass {
 		// do something
 		return msg;
 	}
+}
+```
+
+## Using RMQErrorHandler
+If you want to use custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that implements `RMQErrorHandler`:
+
+```javascript
+class MyErrorHandler implements RMQErrorHandler {
+    public static handle(headers: IRmqErrorHeaders): Error | RMQError {
+    // do something
+        return new RMQError(
+            headers['-x-error'],
+            headers['-x-type'],
+            headers['-x-status-code'],
+            headers['-x-data'],
+            headers['-x-service'],
+            headers['-x-host']
+        );
+    }
 }
 ```
 
