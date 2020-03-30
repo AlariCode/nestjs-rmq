@@ -1,5 +1,11 @@
 # Change log
 
+## 1.5.0
+-   Added error handler (thx to @mjarmoc)
+-   Added more debug info to error message (thx to @mjarmoc)
+-   Refactoring
+-   Fixed error message ack with notify command
+
 ## 1.4.6
 -   Fixed ack none RPC messages
 -   Fixed logs

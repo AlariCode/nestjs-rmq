@@ -1,5 +1,5 @@
 import {
-	ERROR_NO_ROUTE_FOR_CONTROLLER,
+	ERROR_NO_ROUTE_FOR_CONTROLLER, ERROR_TYPE,
 	ERROR_UNDEFINED_FROM_RPC,
 	RMQ_ROUTES_META,
 } from '../constants';
@@ -37,7 +37,7 @@ export function RMQController(): ClassDecorator {
 								responseEmitter.emit(
 									ResponseEmmiterResult.error,
 									msg,
-									new RMQError(ERROR_UNDEFINED_FROM_RPC)
+									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ)
 								);
 							} else {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
@@ -45,6 +45,8 @@ export function RMQController(): ClassDecorator {
 						} catch (err) {
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
+							} else {
+								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						}
 					});

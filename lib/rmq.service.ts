@@ -1,32 +1,31 @@
 import { Injectable } from '@nestjs/common';
 import {
+	CONNECTED_MESSAGE,
+	CONNECTING_MESSAGE,
+	CUSTOM_LOGS, DEFAULT_PREFETCH_COUNT,
+	DEFAULT_RECONNECT_TIME,
+	DEFAULT_TIMEOUT,
 	DISCONNECT_EVENT,
 	DISCONNECT_MESSAGE,
-	REPLY_QUEUE,
-	CONNECTING_MESSAGE,
-	CONNECTED_MESSAGE,
-	EXCHANGE_TYPE,
-	DEFAULT_RECONNECT_TIME,
-	ERROR_NONE_RPC,
 	ERROR_NO_ROUTE,
+	ERROR_NONE_RPC,
 	ERROR_TIMEOUT,
-	DEFAULT_TIMEOUT,
-	CUSTOM_LOGS,
-	RMQ_ROUTES_META,
 	ERROR_TYPE,
+	EXCHANGE_TYPE,
+	REPLY_QUEUE,
+	RMQ_ROUTES_META,
 } from './constants';
 import { EventEmitter } from 'events';
-import { Message, Channel } from 'amqplib';
+import { Channel, Message } from 'amqplib';
 import { Signale } from 'signale';
-import { ChannelWrapper, AmqpConnectionManager } from 'amqp-connection-manager';
-import { IRMQServiceOptions, IRMQConnection } from './interfaces/rmq-options.interface';
-import { responseEmitter, requestEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
-// tslint:disable-next-line: no-duplicate-imports
 import * as amqp from 'amqp-connection-manager';
+// tslint:disable-next-line:no-duplicate-imports
+import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
+import { IRMQConnection, IRMQServiceOptions } from './interfaces/rmq-options.interface';
+import { requestEmitter, responseEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
 import 'reflect-metadata';
 import { IQueueMeta } from './interfaces/queue-meta.interface';
 import { RMQError } from './classes/rmq-error.class';
-import { RMQTransportError } from './classes/rmq-transport-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { hostname } from 'os';
 
@@ -37,7 +36,7 @@ export class RMQService {
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
-	private topics: IQueueMeta[];
+	private queueMeta: IQueueMeta[];
 	private logger: any;
 
 	constructor(options: IRMQServiceOptions) {
@@ -59,20 +58,18 @@ export class RMQService {
 			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 		});
 		const connectionOptions = {
-			reconnectTimeInSeconds: this.options.reconnectTimeInSeconds
-				? this.options.reconnectTimeInSeconds
-				: DEFAULT_RECONNECT_TIME,
+			reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME
 		};
 		this.server = amqp.connect(connectionURLs, connectionOptions);
 		this.channel = this.server.createChannel({
 			json: false,
 			setup: async (channel: Channel) => {
 				await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
-					durable: this.options.isExchangeDurable ? this.options.isExchangeDurable : true,
+					durable: this.options.isExchangeDurable ?? true,
 				});
 				await channel.prefetch(
-					this.options.prefetchCount ? this.options.prefetchCount : 0,
-					this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false
+					this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
+					this.options.isGlobalPrefetchCount ?? false
 				);
 				await channel.consume(
 					this.replyQueue,
@@ -81,7 +78,7 @@ export class RMQService {
 					},
 					{ noAck: true }
 				);
-				this.listenReply();
+				this.waitForReply();
 				if (this.options.queueName) {
 					this.listen(channel);
 				}
@@ -98,21 +95,21 @@ export class RMQService {
 	public async send<IMessage, IReply>(topic: string, message: IMessage): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
 			const correlationId = this.getUniqId();
-			const timeout = this.options.messagesTimeout ? this.options.messagesTimeout : DEFAULT_TIMEOUT;
+			const timeout = this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
-				reject(new RMQTransportError(`${ERROR_TIMEOUT}: ${timeout}`));
+				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
 			}, timeout);
 			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
-				const { content } = msg;
-				if (msg.properties.headers['-x-error-message']) {
+				if (msg.properties.headers['-x-error']) {
 					reject(this.errorHandler(msg));
 				}
+				const { content } = msg;
 				if (content.toString()) {
 					this.logger.recieved(`[${topic}] ${content.toString()}`);
 					resolve(JSON.parse(content.toString()));
 				} else {
-					reject(new RMQTransportError(ERROR_NONE_RPC));
+					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
 				}
 			});
 			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
@@ -124,9 +121,6 @@ export class RMQService {
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage): Promise<void> {
-		if (!this.server || !this.server.isConnected()) {
-			await this.init();
-		}
 		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)));
 		this.logger.sent(`[${topic}] ${JSON.stringify(message)}`);
 	}
@@ -141,14 +135,14 @@ export class RMQService {
 
 	private async listen(channel: Channel) {
 		await channel.assertQueue(this.options.queueName, {
-			durable: this.options.isQueueDurable || true,
-			arguments: this.options.queueArguments || {},
+			durable: this.options.isQueueDurable ?? true,
+			arguments: this.options.queueArguments ?? {},
 		});
-		this.topics = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-		this.topics = this.topics ? this.topics : [];
-		if (this.topics.length > 0) {
-			this.topics.map(async topic => {
-				await channel.bindQueue(this.options.queueName, this.options.exchangeName, topic.topic);
+		this.queueMeta = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		this.queueMeta = this.queueMeta ?? [];
+		if (this.queueMeta.length > 0) {
+			this.queueMeta.map(async meta => {
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, meta.topic);
 			});
 		}
 		await channel.consume(
@@ -159,14 +153,14 @@ export class RMQService {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
 				} else {
-					this.reply('', msg, new RMQTransportError(ERROR_NO_ROUTE));
+					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
 				}
 			},
 			{ noAck: false }
 		);
 	}
 
-	private async listenReply(): Promise<void> {
+	private async waitForReply(): Promise<void> {
 		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
 			this.reply(result, msg);
 		});
@@ -178,7 +172,7 @@ export class RMQService {
 		});
 	}
 
-	private async reply(res: any, msg: Message, error: RMQTransportError | RMQError = null) {
+	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 		res = await this.intercept(res, msg, error);
 		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
@@ -201,7 +195,7 @@ export class RMQService {
 	}
 
 	private isTopicExists(topic: string): boolean {
-		return !!this.topics.find(x => x.topic === topic);
+		return !!this.queueMeta.find(x => x.topic === topic);
 	}
 
 	private async useMiddleware(msg: Message) {
@@ -228,40 +222,30 @@ export class RMQService {
 		return (error as RMQError).code !== undefined;
 	}
 
-	private buildError(error: RMQTransportError | RMQError) {
+	private buildError(error: Error | RMQError) {
 		if (!error) {
 			return null;
 		}
-
 		let errorHeaders = {};
 		errorHeaders['-x-error'] = error.message;
 		errorHeaders['-x-host'] = hostname();
 		errorHeaders['-x-service'] = this.options.serviceName;
-
 		if (this.isRMQError(error)) {
 			errorHeaders = {
 				...errorHeaders,
 				'-x-status-code': (error as RMQError).code,
 				'-x-data': (error as RMQError).data,
-				'-x-type': ERROR_TYPE.RMQ,
-			};
-		} else {
-			errorHeaders = {
-				...errorHeaders,
-				'-x-type': ERROR_TYPE.TRANSPORT,
+				'-x-type': (error as RMQError).type,
 			};
 		}
-
 		return errorHeaders;
 	}
 
 	private errorHandler(msg: Message): any {
 		const { headers } = msg.properties;
-
 		if (this.options.errorHandler) {
 			return this.options.errorHandler.handle(headers);
 		}
-
 		return RMQErrorHandler.handle(headers);
 	}
 }
