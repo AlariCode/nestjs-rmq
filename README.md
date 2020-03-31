@@ -22,7 +22,7 @@ npm i nestjs-rmq
 Setup your connection in root module:
 
 ```javascript
-import { RMQModule } from 'nestjs-rmq';
+import { RMQModule } from 'nestjs-tests';
 
 @Module({
 	imports: [
@@ -102,7 +102,7 @@ export class MyIntercepter implements RMQIntercepterClass {
 Config example with middleware and intercepters:
 
 ```javascript
-import { RMQModule } from 'nestjs-rmq';
+import { RMQModule } from 'nestjs-tests';
 
 @Module({
 	imports: [
@@ -213,7 +213,7 @@ myMethod(numbers: number[]): number {
 NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
 
 ```javascript
-import { RMQController, RMQRoute, Validate } from 'nestjs-rmq';
+import { RMQController, RMQRoute, Validate } from 'nestjs-tests';
 
 @Validate()
 @RMQRoute('my.rpc')
@@ -244,7 +244,7 @@ If your input data will be invalid, the library will send back an error without 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
 ```javascript
-import { RMQController, RMQRoute, RMQPipe } from 'nestjs-rmq';
+import { RMQController, RMQRoute, RMQPipe } from 'nestjs-tests';
 
 @RMQPipe(MyPipeClass)
 @RMQRoute('my.rpc')

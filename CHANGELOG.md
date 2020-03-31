@@ -1,5 +1,9 @@
 # Change log
 
+## 1.5.1
+-   Fixed ack race condition
+-   Added tests
+
 ## 1.5.0
 -   Added error handler (thx to @mjarmoc)
 -   Added more debug info to error message (thx to @mjarmoc)
