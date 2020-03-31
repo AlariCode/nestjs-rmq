@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { RMQController, RMQError, RMQRoute, Validate } from '../../lib';
-import { NotificationContracts, SumContracts } from '../contracts/mock.contracts';
+import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts } from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
 
 @Controller()
@@ -27,5 +27,17 @@ export class MicroserviceController {
 	notificationNone({ message }: NotificationContracts.Request): void {
 		console.log(message);
 		return;
+	}
+
+	@RMQRoute(MultiplyContracts.topic)
+	@Validate()
+	multiplyRpc({ arrayToMultiply }: MultiplyContracts.Request): MultiplyContracts.Response {
+		return { result: arrayToMultiply.reduce((prev, cur) => prev * cur) };
+	}
+
+	@RMQRoute(DivideContracts.topic)
+	@Validate()
+	divide({ first, second}: DivideContracts.Request): DivideContracts.Response {
+		return { result: first/second };
 	}
 }

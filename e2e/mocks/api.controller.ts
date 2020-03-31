@@ -1,10 +1,11 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 import { RMQService } from '../../lib';
-import { NotificationContracts, SumContracts } from '../contracts/mock.contracts';
+import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts } from '../contracts/mock.contracts';
 
 @Controller()
 export class ApiController {
-	constructor(private readonly rmq: RMQService) {}
+	constructor(private readonly rmq: RMQService) {
+	}
 
 	async sumSuccess(arrayToSum: number[]): Promise<SumContracts.Response> {
 		return this.rmq.send<SumContracts.Request, SumContracts.Response>(SumContracts.topic, { arrayToSum });
@@ -20,5 +21,19 @@ export class ApiController {
 
 	async notificationFailed(message: number): Promise<void> {
 		return this.rmq.notify<any>(NotificationContracts.topic, { message });
+	}
+
+	async multiply(arrayToMultiply: number[]): Promise<MultiplyContracts.Response> {
+		return this.rmq.send<MultiplyContracts.Request, MultiplyContracts.Response>(
+			MultiplyContracts.topic,
+			{ arrayToMultiply },
+		);
+	}
+
+	async divide(first: number, second: number): Promise<DivideContracts.Response> {
+		return this.rmq.send<DivideContracts.Request, DivideContracts.Response>(
+			DivideContracts.topic,
+			{ first, second },
+		);
 	}
 }

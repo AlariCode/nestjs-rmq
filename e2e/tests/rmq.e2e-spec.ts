@@ -1,9 +1,12 @@
 import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
 import { INestApplication } from '@nestjs/common';
-import { ApiController } from '../controllers/api.controller';
-import { MicroserviceController } from '../controllers/microservice.controller';
+import { ApiController } from '../mocks/api.controller';
+import { MicroserviceController } from '../mocks/microservice.controller';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
+import { DoublePipe } from '../mocks/double.pipe';
+import { ZeroIntercepter } from '../mocks/zero.intercepter';
+import { ErrorHostHandler } from '../mocks/error-host.handler';
 
 describe('TestController', () => {
 	let api: INestApplication;
@@ -26,6 +29,9 @@ describe('TestController', () => {
 					],
 					queueName: 'test',
 					prefetchCount: 10,
+					middleware: [DoublePipe],
+					intercepters: [ZeroIntercepter],
+					errorHandler: ErrorHostHandler,
 					serviceName: 'test-service'
 				}),
 			],
@@ -104,16 +110,39 @@ describe('TestController', () => {
 	describe('none', () => {
 		it('successful notify()', async () => {
 			const res = await apiController.notificationSuccess('test');
-			expect(spyNotificationNone).toBeCalledTimes(1);
 			expect(console.log).toBeCalledTimes(1);
 			expect(console.log).toHaveBeenCalledWith('test');
 			expect(res).toBeUndefined();
 		});
 		it('notify validation failed', async () => {
 			const res = await apiController.notificationFailed(0);
-			expect(spyNotificationNone).toBeCalledTimes(2);
 			expect(console.log).toBeCalledTimes(1);
 			expect(res).toBeUndefined();
+		});
+	});
+
+	describe('middleware', () => {
+		it('doublePipe', async () => {
+			const { result } = await apiController.multiply([1, 2]);
+			expect(result).toBe(8);
+		});
+	});
+
+	describe('interceptor', () => {
+		it('zeroInterceptor', async () => {
+			const { result } = await apiController.divide(10, 5);
+			expect(result).toBe(0);
+		});
+	});
+
+	describe('errorHandler', () => {
+		it('error host change', async () => {
+			try {
+				const { result } = await apiController.sumSuccess([0,0,0]);
+				expect(result).not.toBe(0);
+			} catch (error) {
+				expect(error.host).toBe('handler');
+			}
 		});
 	});
 
@@ -125,7 +154,7 @@ describe('TestController', () => {
 });
 
 function delay(time: number) {
-	return new Promise((resolve, reject) => {
+	return new Promise((resolve) => {
 		setTimeout(() => {
 			resolve();
 		}, time);
