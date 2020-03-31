@@ -286,3 +286,14 @@ class MyErrorHandler implements RMQErrorHandler {
 ## Disconnecting
 
 If you want to close connection, for example, if you are using RMQ in testing tools, use `disconnect()` method;
+
+## Running test
+For e2e tests you need to install Docker in your machine and start RabbitMQ docker image with `docker-compose.yml` in `e2e` folder:
+```
+docker-compose up -d
+```
+Then run tests with
+```
+npm run test
+```
+![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.jpg)

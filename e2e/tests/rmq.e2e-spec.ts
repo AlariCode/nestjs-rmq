@@ -8,7 +8,7 @@ import { DoublePipe } from '../mocks/double.pipe';
 import { ZeroIntercepter } from '../mocks/zero.intercepter';
 import { ErrorHostHandler } from '../mocks/error-host.handler';
 
-describe('TestController', () => {
+describe('RMQe2e', () => {
 	let api: INestApplication;
 	let apiController: ApiController;
 	let microserviceController: MicroserviceController;
