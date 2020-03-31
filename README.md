@@ -296,4 +296,4 @@ Then run tests with
 ```
 npm run test
 ```
-![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.jpg)
+![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.png)
