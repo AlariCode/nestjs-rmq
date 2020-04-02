@@ -1,5 +1,8 @@
 # Change log
 
+## 1.5.2
+-   Fixed double logging
+
 ## 1.5.1
 -   Fixed ack race condition
 -   Added tests

@@ -174,7 +174,6 @@ export class RMQService {
 
 	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		this.channel.ack(msg);
-		this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
 		res = await this.intercept(res, msg, error);
 		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
