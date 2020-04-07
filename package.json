@@ -30,7 +30,8 @@
 		"amqplib": "^0.5.5",
 		"class-validator": "^0.11.1",
 		"reflect-metadata": "^0.1.13",
-		"signale": "^1.4.0"
+		"signale": "^1.4.0",
+		"@nestjs/common": "^7.0.1"
 	},
 	"devDependencies": {
 		"@nestjs/common": "^7.0.0",
