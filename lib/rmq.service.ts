@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, LoggerService } from '@nestjs/common';
 import {
 	CONNECTED_MESSAGE,
 	CONNECTING_MESSAGE,
@@ -37,11 +37,11 @@ export class RMQService {
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
 	private queueMeta: IQueueMeta[];
-	private logger: any;
+	private logger: LoggerService;
 
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
-		this.logger = new Signale({
+		this.logger = options.logger ? options.logger : new Signale({
 			config: {
 				displayTimestamp: true,
 				displayDate: true,
@@ -53,7 +53,7 @@ export class RMQService {
 	}
 
 	public async init(): Promise<void> {
-		this.logger.watch(CONNECTING_MESSAGE);
+		this.logger.log(CONNECTING_MESSAGE);
 		const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 		});
@@ -82,7 +82,7 @@ export class RMQService {
 				if (this.options.queueName) {
 					this.listen(channel);
 				}
-				this.logger.success(CONNECTED_MESSAGE);
+				this.logger.log(CONNECTED_MESSAGE);
 			},
 		});
 
@@ -106,7 +106,7 @@ export class RMQService {
 				}
 				const { content } = msg;
 				if (content.toString()) {
-					this.logger.recieved(`[${topic}] ${content.toString()}`);
+					this.logger.debug(`[${topic}] ${content.toString()}`);
 					resolve(JSON.parse(content.toString()));
 				} else {
 					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
@@ -116,13 +116,13 @@ export class RMQService {
 				replyTo: this.replyQueue,
 				correlationId,
 			});
-			this.logger.sent(`[${topic}] ${JSON.stringify(message)}`);
+			this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
 		});
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage): Promise<void> {
 		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)));
-		this.logger.sent(`[${topic}] ${JSON.stringify(message)}`);
+		this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
 	}
 
 	public async disconnect() {
@@ -181,7 +181,7 @@ export class RMQService {
 				...this.buildError(error),
 			},
 		});
-		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
+		this.logger.debug(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
 	private getUniqId(): string {
@@ -202,7 +202,7 @@ export class RMQService {
 			return msg;
 		}
 		for (const middleware of this.options.middleware) {
-			msg = await new middleware().transform(msg);
+			msg = await new middleware(this.logger).transform(msg);
 		}
 		return msg;
 	}
@@ -212,7 +212,7 @@ export class RMQService {
 			return res;
 		}
 		for (const intercepter of this.options.intercepters) {
-			res = await new intercepter().intercept(res, msg, error);
+			res = await new intercepter(this.logger).intercept(res, msg, error);
 		}
 		return res;
 	}
