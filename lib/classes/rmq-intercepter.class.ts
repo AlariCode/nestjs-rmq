@@ -2,7 +2,11 @@ import { Message } from 'amqplib';
 import { LoggerService } from '@nestjs/common';
 
 export class RMQIntercepterClass {
-	constructor(protected logger?: LoggerService) {}
+	protected logger: LoggerService;
+
+	constructor(logger: LoggerService = console) {
+		this.logger = logger;
+	}
 
 	async intercept(res: any, msg: Message, error?: Error): Promise<any> {
 		return res;
