@@ -148,7 +148,7 @@ export class RMQService {
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
-				this.logger.recieved(`[${msg.fields.routingKey}] ${msg.content}`);
+				this.logger.log(`[${msg.fields.routingKey}] ${msg.content}`);
 				if (this.isTopicExists(msg.fields.routingKey)) {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
