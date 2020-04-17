@@ -9,7 +9,9 @@ export class RMQModule {
 		const rmqServiceProvider = {
 			provide: RMQService,
 			useFactory: async (): Promise<RMQService> => {
-				return new RMQService(options);
+				const service = new RMQService(options);
+				await service.init();
+				return service;
 			},
 		};
 		return {

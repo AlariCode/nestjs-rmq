@@ -49,47 +49,52 @@ export class RMQService {
 			logLevel: this.options.logMessages ? 'info' : 'error',
 			types: CUSTOM_LOGS,
 		});
-		this.init();
 	}
 
 	public async init(): Promise<void> {
-		this.logger.watch(CONNECTING_MESSAGE);
-		const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
-			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
-		});
-		const connectionOptions = {
-			reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME
-		};
-		this.server = amqp.connect(connectionURLs, connectionOptions);
-		this.channel = this.server.createChannel({
-			json: false,
-			setup: async (channel: Channel) => {
-				await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
-					durable: this.options.isExchangeDurable ?? true,
-				});
-				await channel.prefetch(
-					this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
-					this.options.isGlobalPrefetchCount ?? false
-				);
-				await channel.consume(
-					this.replyQueue,
-					(msg: Message) => {
-						this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
-					},
-					{ noAck: true }
-				);
-				this.waitForReply();
-				if (this.options.queueName) {
-					this.listen(channel);
-				}
-				this.logger.success(CONNECTED_MESSAGE);
-			},
+		return new Promise((resolve) => {
+			this.logger.watch(CONNECTING_MESSAGE);
+			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
+				return `amqp://${connection.login}:${connection.password}@${connection.host}`;
+			});
+			const connectionOptions = {
+				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds
+					? this.options.reconnectTimeInSeconds
+					: DEFAULT_RECONNECT_TIME,
+			};
+			this.server = amqp.connect(connectionURLs, connectionOptions);
+			this.channel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
+						durable: this.options.isExchangeDurable ? this.options.isExchangeDurable : true,
+					});
+					await channel.prefetch(
+						this.options.prefetchCount ? this.options.prefetchCount : 0,
+						this.options.isGlobalPrefetchCount ? this.options.isGlobalPrefetchCount : false
+					);
+					await channel.consume(
+						this.replyQueue,
+						(msg: Message) => {
+							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
+						},
+						{ noAck: true }
+					);
+					this.waitForReply();
+					if (this.options.queueName) {
+						this.listen(channel);
+					}
+					this.logger.success(CONNECTED_MESSAGE);
+					resolve();
+				},
+			});
+		
+			this.server.on(DISCONNECT_EVENT, err => {
+				this.logger.error(DISCONNECT_MESSAGE);
+				this.logger.error(err.err);
+			});
 		});
 
-		this.server.on(DISCONNECT_EVENT, err => {
-			this.logger.error(DISCONNECT_MESSAGE);
-			this.logger.error(err.err);
-		});
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage): Promise<IReply> {
@@ -181,7 +186,7 @@ export class RMQService {
 				...this.buildError(error),
 			},
 		});
-		this.logger.sent(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
+		this.logger.sent(`${msg.properties.correlationId}, [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
 	private getUniqId(): string {
