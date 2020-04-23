@@ -1,7 +1,6 @@
 export const RMQ_ROUTES_META: string = 'RMQ_ROUTES_META';
 export const DISCONNECT_EVENT: string = 'disconnect';
 export const DISCONNECT_MESSAGE: string = 'Disconnected from RMQ. Trying to reconnect';
-export const CONNECTING_MESSAGE: string = 'Connecting to RMQ';
 export const CONNECTED_MESSAGE: string = 'Successfully connected to RMQ';
 export const REPLY_QUEUE: string = 'amq.rabbitmq.reply-to';
 export const EXCHANGE_TYPE: string = 'topic';
@@ -20,18 +19,3 @@ export enum ERROR_TYPE {
 	TRANSPORT = 'TRANSPORT',
 	RMQ = 'RMQ'
 }
-
-export const CUSTOM_LOGS = {
-	recieved: {
-		badge: '▼',
-		color: 'blue',
-		label: 'recieved',
-		logLevel: 'info',
-	},
-	sent: {
-		badge: '▲',
-		color: 'blue',
-		label: 'sent',
-		logLevel: 'info',
-	},
-};

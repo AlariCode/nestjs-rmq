@@ -3,6 +3,9 @@
 ## 1.5.2
 -   Fixed double logging
 
+## 1.6.0
+-   Custom logger injection (thx to @minenkom)
+
 ## 1.5.1
 -   Fixed ack race condition
 -   Added tests

@@ -73,12 +73,13 @@ Additionally, you can use optional parameters:
 -   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
 -   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
--   **middleware** (array) - Array of middleware functions that implements `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
--   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that implements `RMQErrorHandler`.
+-   **logger** (LoggerService) - Your custom logger service that implements `LoggerService` interface. Compatible with Winston and other loggers.
+-   **middleware** (array) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
+-   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that extends `RMQErrorHandler`.
 -   **serviceName** (string) - service name for debugging.
 
 ```javascript
-class LogMiddleware implements RMQPipeClass {
+class LogMiddleware extends RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		console.log(msg);
 		return msg;
@@ -86,10 +87,10 @@ class LogMiddleware implements RMQPipeClass {
 }
 ```
 
--   **intercepters** (array) - Array of intercepter functions that implements `RMQIntercepterClass` with one method `intercept`. They will be triggered before replying on any message. Trigger order is equal to array order.
+-   **intercepters** (array) - Array of intercepter functions that extends `RMQIntercepterClass` with one method `intercept`. They will be triggered before replying on any message. Trigger order is equal to array order.
 
 ```javascript
-export class MyIntercepter implements RMQIntercepterClass {
+export class MyIntercepter extends RMQIntercepterClass {
 	async intercept(res: any, msg: Message, error: Error): Promise<any> {
 		// res - response body
 		// msg - initial message we are replying to
@@ -253,10 +254,10 @@ myMethod(numbers: number[]): number {
 }
 ```
 
-where `MyPipeClass` implements `RMQPipeClass` with one method `transform`:
+where `MyPipeClass` extends `RMQPipeClass` with one method `transform`:
 
 ```javascript
-class MyPipeClass implements RMQPipeClass {
+class MyPipeClass extends RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		// do something
 		return msg;
@@ -265,10 +266,10 @@ class MyPipeClass implements RMQPipeClass {
 ```
 
 ## Using RMQErrorHandler
-If you want to use custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that implements `RMQErrorHandler`:
+If you want to use custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that extends `RMQErrorHandler`:
 
 ```javascript
-class MyErrorHandler implements RMQErrorHandler {
+class MyErrorHandler extends RMQErrorHandler {
     public static handle(headers: IRmqErrorHeaders): Error | RMQError {
     // do something
         return new RMQError(
