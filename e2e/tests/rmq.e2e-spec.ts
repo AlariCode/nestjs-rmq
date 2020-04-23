@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { ApiController } from '../mocks/api.controller';
 import { MicroserviceController } from '../mocks/microservice.controller';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';

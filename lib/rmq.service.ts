@@ -1,8 +1,7 @@
 import { Injectable, LoggerService } from '@nestjs/common';
 import {
 	CONNECTED_MESSAGE,
-	CONNECTING_MESSAGE,
-	CUSTOM_LOGS, DEFAULT_PREFETCH_COUNT,
+	DEFAULT_PREFETCH_COUNT,
 	DEFAULT_RECONNECT_TIME,
 	DEFAULT_TIMEOUT,
 	DISCONNECT_EVENT,
@@ -17,7 +16,6 @@ import {
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
-import { Signale } from 'signale';
 import * as amqp from 'amqp-connection-manager';
 // tslint:disable-next-line:no-duplicate-imports
 import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
@@ -28,6 +26,7 @@ import { IQueueMeta } from './interfaces/queue-meta.interface';
 import { RMQError } from './classes/rmq-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { hostname } from 'os';
+import { RQMColorLogger } from './helpers/logger';
 
 @Injectable()
 export class RMQService {
@@ -41,19 +40,11 @@ export class RMQService {
 
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
-		this.logger = options.logger ? options.logger : new Signale({
-			config: {
-				displayTimestamp: true,
-				displayDate: true,
-			},
-			logLevel: this.options.logMessages ? 'info' : 'error',
-			types: CUSTOM_LOGS,
-		});
+		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
 		this.init();
 	}
 
 	public async init(): Promise<void> {
-		this.logger.log(CONNECTING_MESSAGE);
 		const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 		});
@@ -87,8 +78,7 @@ export class RMQService {
 		});
 
 		this.server.on(DISCONNECT_EVENT, err => {
-			this.logger.error(DISCONNECT_MESSAGE);
-			this.logger.error(err.err);
+			this.logger.error(DISCONNECT_MESSAGE, err);
 		});
 	}
 
@@ -106,7 +96,7 @@ export class RMQService {
 				}
 				const { content } = msg;
 				if (content.toString()) {
-					this.logger.debug(`[${topic}] ${content.toString()}`);
+					this.logger.debug(`Received ▼ [${topic}] ${content.toString()}`);
 					resolve(JSON.parse(content.toString()));
 				} else {
 					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
@@ -116,7 +106,7 @@ export class RMQService {
 				replyTo: this.replyQueue,
 				correlationId,
 			});
-			this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
+			this.logger.debug(`Sent ▲ [${topic}] ${JSON.stringify(message)}`);
 		});
 	}
 
@@ -148,7 +138,7 @@ export class RMQService {
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
-				this.logger.log(`[${msg.fields.routingKey}] ${msg.content}`);
+				this.logger.debug(`Received ▼ [${msg.fields.routingKey}] ${msg.content}`);
 				if (this.isTopicExists(msg.fields.routingKey)) {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
@@ -181,7 +171,7 @@ export class RMQService {
 				...this.buildError(error),
 			},
 		});
-		this.logger.debug(`[${msg.fields.routingKey}] ${JSON.stringify(res)}`);
+		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
 	private getUniqId(): string {

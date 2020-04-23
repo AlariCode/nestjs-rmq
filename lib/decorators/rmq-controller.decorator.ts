@@ -6,23 +6,16 @@ import {
 import { IQueueMeta } from '../interfaces/queue-meta.interface';
 import { requestEmitter, responseEmitter, ResponseEmmiterResult } from '../emmiters/router.emmiter';
 import { RMQService } from '../rmq.service';
-import { Signale } from 'signale';
 import { Message } from 'amqplib';
 import { RMQError } from '..';
+import { Logger } from '@nestjs/common';
 
 export function RMQController(): ClassDecorator {
 	return function(target: any) {
-		const logger = new Signale({
-			config: {
-				displayTimestamp: true,
-				displayDate: true,
-			},
-			logLevel: 'error',
-		});
 		let topics: IQueueMeta[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
 		topics = topics ? topics.filter(topic => topic.target === target.prototype) : [];
 		if(topics.length === 0) {
-			logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
+			Logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
 		target = class extends (target as { new(...args): any }) {
 			constructor(...args: any) {
