@@ -1,10 +1,14 @@
 # Change log
 
-## 1.5.2
--   Fixed double logging
+## 1.7.0
+-   Fixed reconnection bug
+-   Async init all modules loaded (thx to mjarmoc)
 
 ## 1.6.0
 -   Custom logger injection (thx to @minenkom)
+
+## 1.5.2
+-   Fixed double logging
 
 ## 1.5.1
 -   Fixed ack race condition

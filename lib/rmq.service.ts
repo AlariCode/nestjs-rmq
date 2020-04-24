@@ -41,45 +41,49 @@ export class RMQService {
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
-		this.init();
 	}
 
 	public async init(): Promise<void> {
-		const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
-			return `amqp://${connection.login}:${connection.password}@${connection.host}`;
-		});
-		const connectionOptions = {
-			reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME
-		};
-		this.server = amqp.connect(connectionURLs, connectionOptions);
-		this.channel = this.server.createChannel({
-			json: false,
-			setup: async (channel: Channel) => {
-				await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
-					durable: this.options.isExchangeDurable ?? true,
-				});
-				await channel.prefetch(
-					this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
-					this.options.isGlobalPrefetchCount ?? false
-				);
-				await channel.consume(
-					this.replyQueue,
-					(msg: Message) => {
-						this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
-					},
-					{ noAck: true }
-				);
-				this.waitForReply();
-				if (this.options.queueName) {
-					this.listen(channel);
-				}
-				this.logger.log(CONNECTED_MESSAGE);
-			},
-		});
+		return new Promise((resolve => {
+			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
+				return `amqp://${connection.login}:${connection.password}@${connection.host}`;
+			});
+			const connectionOptions = {
+				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME
+			};
+			this.server = amqp.connect(connectionURLs, connectionOptions);
+			this.channel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
+						durable: this.options.isExchangeDurable ?? true,
+					});
+					await channel.prefetch(
+						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
+						this.options.isGlobalPrefetchCount ?? false
+					);
+					await channel.consume(
+						this.replyQueue,
+						(msg: Message) => {
+							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
+						},
+						{ noAck: true }
+					);
+					this.waitForReply();
+					if (this.options.queueName) {
+						this.listen(channel);
+					}
+					this.logger.log(CONNECTED_MESSAGE);
+					resolve();
+				},
+			});
 
-		this.server.on(DISCONNECT_EVENT, err => {
-			this.logger.error(DISCONNECT_MESSAGE, err);
-		});
+			this.server.on(DISCONNECT_EVENT, err => {
+				this.logger.error(DISCONNECT_MESSAGE);
+				this.logger.error(err.err);
+			});
+		}));
+
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage): Promise<IReply> {
@@ -150,7 +154,7 @@ export class RMQService {
 		);
 	}
 
-	private async waitForReply(): Promise<void> {
+	private waitForReply(): void {
 		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
 			this.reply(result, msg);
 		});
