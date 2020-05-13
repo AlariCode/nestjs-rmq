@@ -1,5 +1,8 @@
 # Change log
 
+## 1.7.1
+-   Fixed event emmitor leak (thx to mjarmoc)
+
 ## 1.7.0
 -   Fixed reconnection bug
 -   Async init all modules loaded (thx to mjarmoc)

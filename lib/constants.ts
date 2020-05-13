@@ -1,5 +1,6 @@
 export const RMQ_ROUTES_META: string = 'RMQ_ROUTES_META';
 export const DISCONNECT_EVENT: string = 'disconnect';
+export const CONNECT_EVENT: string = 'connect';
 export const DISCONNECT_MESSAGE: string = 'Disconnected from RMQ. Trying to reconnect';
 export const CONNECTED_MESSAGE: string = 'Successfully connected to RMQ';
 export const REPLY_QUEUE: string = 'amq.rabbitmq.reply-to';

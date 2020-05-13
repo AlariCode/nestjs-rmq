@@ -1,5 +1,6 @@
 import { Injectable, LoggerService } from '@nestjs/common';
 import {
+	CONNECT_EVENT,
 	CONNECTED_MESSAGE,
 	DEFAULT_PREFETCH_COUNT,
 	DEFAULT_RECONNECT_TIME,
@@ -78,7 +79,7 @@ export class RMQService {
 					resolve();
 				},
 			});
-			this.server.on('connect', (connection) => {
+			this.server.on(CONNECT_EVENT, (connection) => {
 				this.attachEmmitters();
 			});
 			this.server.on(DISCONNECT_EVENT, (err) => {
