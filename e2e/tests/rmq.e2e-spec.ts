@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
-import { INestApplication } from '@nestjs/common';
+import { INestApplication, Logger } from '@nestjs/common';
 import { ApiController } from '../mocks/api.controller';
 import { MicroserviceController } from '../mocks/microservice.controller';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
@@ -32,7 +32,7 @@ describe('RMQe2e', () => {
 					middleware: [DoublePipe],
 					intercepters: [ZeroIntercepter],
 					errorHandler: ErrorHostHandler,
-					serviceName: 'test-service'
+					serviceName: 'test-service',
 				}),
 			],
 			controllers: [ApiController, MicroserviceController],
@@ -68,7 +68,7 @@ describe('RMQe2e', () => {
 		});
 		it('get common Error from method', async () => {
 			try {
-				const { result } = await apiController.sumSuccess([0,0,0]);
+				const { result } = await apiController.sumSuccess([0, 0, 0]);
 				expect(result).not.toBe(0);
 			} catch (error) {
 				expect(error.message).toBe('My error from method');
@@ -81,7 +81,7 @@ describe('RMQe2e', () => {
 		});
 		it('get RMQError from method', async () => {
 			try {
-				const { result } = await apiController.sumSuccess([-1,0,0]);
+				const { result } = await apiController.sumSuccess([-1, 0, 0]);
 				expect(result).not.toBe(-1);
 			} catch (error) {
 				expect(error.message).toBe('My RMQError from method');
@@ -94,7 +94,7 @@ describe('RMQe2e', () => {
 		});
 		it('get undefined return Error', async () => {
 			try {
-				const { result } = await apiController.sumSuccess([-11,0,0]);
+				const { result } = await apiController.sumSuccess([-11, 0, 0]);
 				expect(result).not.toBe(-11);
 			} catch (error) {
 				expect(error.message).toBe(ERROR_UNDEFINED_FROM_RPC);
@@ -138,7 +138,7 @@ describe('RMQe2e', () => {
 	describe('errorHandler', () => {
 		it('error host change', async () => {
 			try {
-				const { result } = await apiController.sumSuccess([0,0,0]);
+				const { result } = await apiController.sumSuccess([0, 0, 0]);
 				expect(result).not.toBe(0);
 			} catch (error) {
 				expect(error.host).toBe('handler');
