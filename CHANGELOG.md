@@ -1,5 +1,8 @@
 # Change log
 
+## 1.8.0
+-   Messages publishing options exposed (thx to mjarmoc)
+
 ## 1.7.1
 -   Fixed event emmitor leak (thx to mjarmoc)
 
