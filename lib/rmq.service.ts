@@ -24,6 +24,7 @@ import { IRMQConnection, IRMQServiceOptions } from './interfaces/rmq-options.int
 import { requestEmitter, responseEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
 import 'reflect-metadata';
 import { IQueueMeta } from './interfaces/queue-meta.interface';
+import { IPublishOptions } from './interfaces/rmq-publish-options.interface';
 import { RMQError } from './classes/rmq-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { hostname } from 'os';
@@ -94,7 +95,7 @@ export class RMQService {
 		this.channel.ack(msg);
 	}
 
-	public async send<IMessage, IReply>(topic: string, message: IMessage): Promise<IReply> {
+	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
 			const correlationId = this.getUniqId();
 			const timeout = this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
@@ -117,13 +118,14 @@ export class RMQService {
 			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
 				correlationId,
+				...options,
 			});
 			this.logger.debug(`Sent ▲ [${topic}] ${JSON.stringify(message)}`);
 		});
 	}
 
-	public async notify<IMessage>(topic: string, message: IMessage): Promise<void> {
-		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)));
+	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
+		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), options);
 		this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
 	}
 
