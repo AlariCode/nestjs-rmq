@@ -1,5 +1,8 @@
 # Change log
 
+## 1.9.0
+-   Custom message factory inside controller decorator (thx to mjarmoc)
+
 ## 1.8.0
 -   Messages publishing options exposed (thx to mjarmoc)
 
