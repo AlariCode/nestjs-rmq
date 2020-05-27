@@ -221,6 +221,39 @@ myMethod(numbers: number[]): number {
 }
 ```
 
+`@RMQRoute` handlers accepts a single parameter `msg` which is a ampq `message.content` parsed as a JSON. You may want to add additional custom layer to that message and change the way handler is called. For example you may want to structure your message with two different parts: payload (containing actual data) and context (containing request metadata) and process them explicitly in your handler. You can also decorate params passed to the handler. This is the same thing Nest does with `Request` object and decorators like `Param` or `Body`.
+
+To do that, you may pass a param to the `RMQController` a custom message factory `msgFactory?: (msg: Message, topic: IQueueMeta) => any[];`.
+
+The default msgFactory:
+
+```javascript
+@RMQCOntroller({
+  msgFactory: (msg: Message, topic: IQueueMeta) => [JSON.parse(msg.content.toString())]
+})
+```
+
+Custom msgFactory using @Payload and @Context decorators: 
+
+```javascript
+@RMQCOntroller({
+  msgFactory: (msg: Message, topic: IQueueMeta) => {
+    const parsed = JSON.parse(msg.content.toString());
+    const contextIndex = topic.target[METADATA_KEYS.CONTEXT + topic.methodName]?.[0];
+    const payloadIndex = topic.target[METADATA_KEYS.PAYLOAD + topic.methodName]?.[0];
+    const response = [];
+    if (payloadIndex !== undefined) {
+      response[payloadIndex] = parsed.payload;
+    }
+    if (contextIndex !== undefined) {
+      response[contextIndex] = parsed.context;
+    }
+    return response;
+  };
+})
+```
+
+
 ## Validating data
 
 NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
