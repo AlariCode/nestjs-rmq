@@ -242,6 +242,7 @@ export class RMQService {
 				'-x-status-code': (error as RMQError).code,
 				'-x-data': (error as RMQError).data,
 				'-x-type': (error as RMQError).type,
+				'-x-custom-code': (error as RMQError).customCode,
 			};
 		}
 		return errorHeaders;

@@ -29,9 +29,22 @@ export class RMQError extends Error {
 	/**
 	 * @summary Host name
 	 */
-	type?: ERROR_TYPE;
+  type?: ERROR_TYPE;
 
-	constructor(message: string, type: ERROR_TYPE, code?: number, data?: any, service?: string, host?: string) {
+  /**
+	 * @summary Custom Code like 'AUTH001'
+	 */
+	customCode?: string;
+
+	constructor(
+		message: string,
+		type: ERROR_TYPE,
+		code?: number,
+		data?: any,
+		service?: string,
+		host?: string,
+		customCode?: string
+	) {
 		super();
 		Object.setPrototypeOf(this, new.target.prototype);
 		this.message = message;
@@ -40,5 +53,6 @@ export class RMQError extends Error {
 		this.data = data;
 		this.service = service;
 		this.host = host;
+		this.customCode = customCode;
 	}
 }
