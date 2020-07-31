@@ -1,6 +1,6 @@
 import { Controller } from '@nestjs/common';
 import { RMQService } from '../../lib';
-import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts } from '../contracts/mock.contracts';
+import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts, TimeOutContracts } from '../contracts/mock.contracts';
 
 @Controller()
 export class ApiController {
@@ -29,6 +29,14 @@ export class ApiController {
 			{ arrayToMultiply },
 		);
 	}
+
+    async timeOutMessage(num: number): Promise<number> {
+       return this.rmq.send<number, number>(
+            TimeOutContracts.topic,
+            num,
+            { timeout: 4000 },
+       )
+    }
 
 	async divide(first: number, second: number): Promise<DivideContracts.Response> {
 		return this.rmq.send<DivideContracts.Request, DivideContracts.Response>(

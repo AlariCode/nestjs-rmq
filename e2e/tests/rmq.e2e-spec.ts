@@ -33,6 +33,7 @@ describe('RMQe2e', () => {
 					intercepters: [ZeroIntercepter],
 					errorHandler: ErrorHostHandler,
 					serviceName: 'test-service',
+					messagesTimeout: 2000,
 				}),
 			],
 			controllers: [ApiController, MicroserviceController],
@@ -105,6 +106,15 @@ describe('RMQe2e', () => {
 				expect(error.host).not.toBeNull();
 			}
 		});
+		it('long message timeout', async () => {
+			try {
+				const num = await apiController.timeOutMessage(10);
+				expect(num).toBe(10);
+			} catch(e) {
+				expect(e.message).toBeNull();
+			}
+		});
+
 	});
 
 	describe('none', () => {

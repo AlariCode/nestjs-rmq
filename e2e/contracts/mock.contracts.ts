@@ -47,3 +47,7 @@ export namespace NotificationContracts {
 		message: string;
 	}
 }
+
+export namespace TimeOutContracts {
+    export const topic: string = 'timeout.rpc';
+}
