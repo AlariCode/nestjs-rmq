@@ -162,12 +162,14 @@ Also you can use send options:
 this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3], {
     expiration: 1000,
     priority: 1,
-    persistent: true
+    persistent: true,
+    timeout: 30000
 })
 ```
 -   **expiration** - if supplied, the message will be discarded from a queue once it’s been there longer than the given number of milliseconds.
 -   **priority** - a priority for the message.
 -   **persistent** - if truthy, the message will survive broker restarts provided it’s in a queue that also survives restarts.
+-   **timeout** - if supplied, the message will have its own timeout.
 
 If you want to just notify services:
 

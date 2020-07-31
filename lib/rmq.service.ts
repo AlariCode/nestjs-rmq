@@ -98,7 +98,7 @@ export class RMQService {
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
 			const correlationId = this.getUniqId();
-			const timeout = this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
+			const timeout = options.timeout ?? this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
 				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
 			}, timeout);
