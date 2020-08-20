@@ -14,6 +14,7 @@ import {
 	EXCHANGE_TYPE,
 	REPLY_QUEUE,
 	RMQ_ROUTES_META,
+	DEFAULT_HEARTBEAT_TIME,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -52,6 +53,7 @@ export class RMQService {
 			});
 			const connectionOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
+				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
 			this.channel = this.server.createChannel({

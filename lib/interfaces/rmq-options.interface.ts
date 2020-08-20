@@ -15,6 +15,7 @@ export interface IRMQServiceOptions {
 	isQueueDurable?: boolean;
 	isExchangeDurable?: boolean;
 	reconnectTimeInSeconds?: number;
+	heartbeatIntervalInSeconds?: number;
 	messagesTimeout?: number;
 	logMessages?: boolean;
 	logger?: LoggerService;

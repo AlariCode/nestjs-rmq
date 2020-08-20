@@ -13,6 +13,7 @@ export const ERROR_UNDEFINED_FROM_RPC: string = 'RPC method returned undefined';
 export const ERROR_TIMEOUT: string = 'Response timeout error';
 
 export const DEFAULT_RECONNECT_TIME: number = 5;
+export const DEFAULT_HEARTBEAT_TIME: number = 5;
 export const DEFAULT_TIMEOUT: number = 30000;
 export const DEFAULT_PREFETCH_COUNT: number = 0;
 

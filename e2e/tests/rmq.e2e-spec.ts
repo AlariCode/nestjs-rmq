@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
-import { INestApplication, Logger } from '@nestjs/common';
+import { INestApplication } from '@nestjs/common';
 import { ApiController } from '../mocks/api.controller';
 import { MicroserviceController } from '../mocks/microservice.controller';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
@@ -13,7 +13,6 @@ describe('RMQe2e', () => {
 	let apiController: ApiController;
 	let microserviceController: MicroserviceController;
 	let rmqService: RMQService;
-	let spyNotificationNone;
 
 	beforeAll(async () => {
 		const apiModule = await Test.createTestingModule({
@@ -28,6 +27,7 @@ describe('RMQe2e', () => {
 						},
 					],
 					queueName: 'test',
+					heartbeatIntervalInSeconds: 10,
 					prefetchCount: 10,
 					middleware: [DoublePipe],
 					intercepters: [ZeroIntercepter],
@@ -44,7 +44,6 @@ describe('RMQe2e', () => {
 		apiController = apiModule.get<ApiController>(ApiController);
 		microserviceController = apiModule.get<MicroserviceController>(MicroserviceController);
 		rmqService = apiModule.get<RMQService>(RMQService);
-		spyNotificationNone = jest.spyOn(microserviceController, 'notificationNone');
 		console.warn = jest.fn();
 		console.log = jest.fn();
 	});
@@ -163,7 +162,7 @@ describe('RMQe2e', () => {
 	});
 });
 
-function delay(time: number) {
+async function delay(time: number) {
 	return new Promise((resolve) => {
 		setTimeout(() => {
 			resolve();

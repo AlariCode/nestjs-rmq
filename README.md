@@ -68,6 +68,7 @@ Additionally, you can use optional parameters:
 -   **prefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
 -   **isGlobalPrefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
 -   **reconnectTimeInSeconds** (number) - Time in seconds before reconnection retry. Default is 5 seconds.
+-   **heartbeatIntervalInSeconds** (number) - Interval to send heartbeats to broker. Defaults to 5 seconds.
 -   **queueArguments** (object) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
 -   **messagesTimeout** (number) - Number of milliseconds 'post' method will wait for the response before a timeout error. Default is 30 000.
 -   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
