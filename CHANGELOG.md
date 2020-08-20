@@ -1,5 +1,8 @@
 # Change log
 
+## 1.11.0
+-   Added forRootAsync method
+
 ## 1.10.1
 -   Added heartbeat option.
 

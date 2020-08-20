@@ -125,6 +125,42 @@ import { RMQModule } from 'nestjs-tests';
 export class AppModule {}
 ```
 
+## Async initialization
+
+If you want to inject dependency into RMQ initialization like Configuration service, use `forRootAsync`:
+
+```javascript
+import { RMQModule } from 'nestjs-tests';
+import { ConfigModule } from './config/config.module';
+import { ConfigService } from './config/config.service';
+
+@Module({
+	imports: [
+		RMQModule.forRootAsync({
+            imports: [ConfigModule],
+            inject: [ConfigService],
+            useFactory: (configService: ConfigService) => {
+                return {
+                    exchangeName: 'test',
+                    connections: [
+                        {
+                            login: 'guest',
+                            password: 'guest',
+                            host: configService.getHost(),
+                        },
+                    ],
+                    queueName: 'test',
+                }
+            }
+        }),
+	],
+})
+export class AppModule {}
+```
+- **useFactory** - returns `IRMQServiceOptions`.
+- **imports** - additional modules for configuration.
+- **inject** - additional services for usage inside useFactory.
+
 ## Sending messages
 
 To send message with RPC topic use send() method in your controller or service:
