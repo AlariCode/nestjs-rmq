@@ -40,6 +40,7 @@ export class RMQService {
 	private replyQueue: string = REPLY_QUEUE;
 	private queueMeta: IQueueMeta[];
 	private logger: LoggerService;
+	private isConnected: boolean = false;
 
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
@@ -83,9 +84,11 @@ export class RMQService {
 				},
 			});
 			this.server.on(CONNECT_EVENT, (connection) => {
+				this.isConnected = true;
 				this.attachEmmitters();
 			});
 			this.server.on(DISCONNECT_EVENT, (err) => {
+				this.isConnected = false;
 				this.detachEmitters();
 				this.logger.error(DISCONNECT_MESSAGE);
 				this.logger.error(err.err);
@@ -129,6 +132,10 @@ export class RMQService {
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
 		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), options);
 		this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
+	}
+
+	public healthCheck() {
+		return this.isConnected;
 	}
 
 	public async disconnect() {

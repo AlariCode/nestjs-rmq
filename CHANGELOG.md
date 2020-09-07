@@ -1,5 +1,8 @@
 # Change log
 
+## 1.12.0
+-  Added healthCheck method 
+
 ## 1.11.0
 -   Added forRootAsync method
 

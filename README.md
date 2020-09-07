@@ -368,6 +368,18 @@ class MyErrorHandler extends RMQErrorHandler {
 }
 ```
 
+## HealthCheck
+
+RQMService provides additional method to check if you are still connected to RMQ. Although reconnection is automatic, you can provide wrong credentials and reconnection will not help. So to check connection for Docker healthCheck use:
+
+``` javascript
+
+const isConnected = this.rmqService.healthCheck();
+
+```
+
+If `isConnected` equals `true`, you are successfully connected.
+
 ## Disconnecting
 
 If you want to close connection, for example, if you are using RMQ in testing tools, use `disconnect()` method;

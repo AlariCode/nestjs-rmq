@@ -49,6 +49,10 @@ describe('RMQe2e', () => {
 	});
 
 	describe('rpc', () => {
+		it('check connection', async () => {
+			const isConnected = rmqService.healthCheck();
+			expect(isConnected).toBe(true);
+		});
 		it('successful send()', async () => {
 			const { result } = await apiController.sumSuccess([1, 2, 3]);
 			expect(result).toBe(6);
