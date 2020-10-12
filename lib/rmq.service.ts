@@ -107,7 +107,7 @@ export class RMQService {
 			const timerId = setTimeout(() => {
 				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
 			}, timeout);
-			this.sendResponseEmitter.on(correlationId, (msg: Message) => {
+			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
 				if (msg.properties.headers['-x-error']) {
 					reject(this.errorHandler(msg));
