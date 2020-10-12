@@ -7,6 +7,7 @@ import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
 import { DoublePipe } from '../mocks/double.pipe';
 import { ZeroIntercepter } from '../mocks/zero.intercepter';
 import { ErrorHostHandler } from '../mocks/error-host.handler';
+import { responseEmitter, ResponseEmmiterResult } from '../../lib/emmiters/router.emmiter';
 
 describe('RMQe2e', () => {
 	let api: INestApplication;
@@ -62,7 +63,9 @@ describe('RMQe2e', () => {
 				const { result } = await apiController.sumFailed(['1', '2', '3']);
 				expect(result).not.toBe(6);
 			} catch (error) {
-				expect(error.message).toBe('each value in arrayToSum must be a number conforming to the specified constraints');
+				expect(error.message).toBe(
+					'each value in arrayToSum must be a number conforming to the specified constraints'
+				);
 				expect(error.type).toBeUndefined();
 				expect(error.code).toBeUndefined();
 				expect(error.data).toBeUndefined();
@@ -113,11 +116,10 @@ describe('RMQe2e', () => {
 			try {
 				const num = await apiController.timeOutMessage(10);
 				expect(num).toBe(10);
-			} catch(e) {
+			} catch (e) {
 				expect(e.message).toBeNull();
 			}
 		});
-
 	});
 
 	describe('none', () => {
@@ -156,6 +158,27 @@ describe('RMQe2e', () => {
 			} catch (error) {
 				expect(error.host).toBe('handler');
 			}
+		});
+	});
+
+	describe('ackOnRead', () => {
+		let responseEmitterSpy: jest.SpyInstance = jest.spyOn(responseEmitter, 'emit');
+
+		beforeEach(() => {
+			responseEmitterSpy.mockClear();
+		});
+
+		it('acks after message is processed', async () => {
+			await apiController.sumSuccess([2, 3]);
+			const [[first]] = responseEmitterSpy.mock.calls;
+			expect(first).toBe(ResponseEmmiterResult.success);
+		});
+
+		it('acks on message read', async () => {
+			await apiController.ackOnRead(3);
+			const [[first], [second]] = responseEmitterSpy.mock.calls;
+			expect(first).toBe(ResponseEmmiterResult.ack);
+			expect(second).toBe(ResponseEmmiterResult.success);
 		});
 	});
 

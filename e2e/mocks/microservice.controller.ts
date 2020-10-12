@@ -1,6 +1,13 @@
 import { Controller } from '@nestjs/common';
 import { RMQController, RMQError, RMQRoute, Validate } from '../../lib';
-import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts, TimeOutContracts } from '../contracts/mock.contracts';
+import {
+	AckOnReadContracts,
+	DivideContracts,
+	MultiplyContracts,
+	NotificationContracts,
+	SumContracts,
+	TimeOutContracts,
+} from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
 
 @Controller()
@@ -38,7 +45,7 @@ export class MicroserviceController {
 	@RMQRoute(DivideContracts.topic)
 	@Validate()
 	divide({ first, second }: DivideContracts.Request): DivideContracts.Response {
-		return { result: first/second };
+		return { result: first / second };
 	}
 
 	@RMQRoute(TimeOutContracts.topic)
@@ -47,6 +54,15 @@ export class MicroserviceController {
 			setTimeout(function () {
 				resolve(num);
 			}, 3000);
+		});
+	}
+
+	@RMQRoute(AckOnReadContracts.topic, { ackOnRead: true })
+	async ackOnRead(num: number): Promise<number> {
+		return new Promise((resolve, reject) => {
+			setTimeout(function () {
+				resolve(num);
+			}, 300);
 		});
 	}
 }

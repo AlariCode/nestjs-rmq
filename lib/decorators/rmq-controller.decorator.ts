@@ -23,9 +23,10 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 			constructor(...args: any) {
 				super(...args);
 				topics.forEach(async (topic) => {
+					const shouldAckOnRead = topic.ackOnRead || (options?.ackOnRead && topic.ackOnRead !== false);
 					requestEmitter.on(topic.topic, async (msg: Message) => {
 						try {
-							if (topic.ackOnRead) {
+							if (shouldAckOnRead) {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 							const result = await this[topic.methodName].apply(
@@ -33,12 +34,13 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 								options?.msgFactory ? options.msgFactory(msg, topic) : RMQMessageFactory(msg, topic)
 							);
 							if (msg.properties.replyTo && result) {
-								responseEmitter.emit(ResponseEmmiterResult.success, msg, result);
+								responseEmitter.emit(ResponseEmmiterResult.success, msg, result, shouldAckOnRead);
 							} else if (msg.properties.replyTo && result === undefined) {
 								responseEmitter.emit(
 									ResponseEmmiterResult.error,
 									msg,
-									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ)
+									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ),
+									shouldAckOnRead
 								);
 							} else {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
@@ -46,7 +48,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 						} catch (err) {
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
-							} else if (!topic.ackOnRead) {
+							} else if (!shouldAckOnRead) {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						}

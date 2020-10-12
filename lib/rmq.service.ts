@@ -54,7 +54,7 @@ export class RMQService {
 			});
 			const connectionOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
-				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME
+				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
 			this.channel = this.server.createChannel({
@@ -107,7 +107,7 @@ export class RMQService {
 			const timerId = setTimeout(() => {
 				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
 			}, timeout);
-			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
+			this.sendResponseEmitter.on(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
 				if (msg.properties.headers['-x-error']) {
 					reject(this.errorHandler(msg));
@@ -165,7 +165,7 @@ export class RMQService {
 					msg = await this.useMiddleware(msg);
 					requestEmitter.emit(msg.fields.routingKey, msg);
 				} else {
-					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
+					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT), false);
 				}
 			},
 			{ noAck: false }
@@ -177,18 +177,18 @@ export class RMQService {
 	}
 
 	private attachEmmitters(): void {
-		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
-			this.reply(result, msg);
+		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result, alreadyAcked) => {
+			this.reply(result, msg, null, alreadyAcked);
 		});
-		responseEmitter.on(ResponseEmmiterResult.error, async (msg, err) => {
-			this.reply('', msg, err);
+		responseEmitter.on(ResponseEmmiterResult.error, async (msg, err, alreadyAcked) => {
+			this.reply('', msg, err, alreadyAcked);
 		});
 		responseEmitter.on(ResponseEmmiterResult.ack, async (msg) => {
 			this.ack(msg);
 		});
 	}
 
-	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
+	private async reply(res: any, msg: Message, error: Error | RMQError = null, alreadyAcked: boolean) {
 		res = await this.intercept(res, msg, error);
 		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
@@ -196,7 +196,9 @@ export class RMQService {
 				...this.buildError(error),
 			},
 		});
-		this.ack(msg);
+		if (!alreadyAcked) {
+			this.ack(msg);
+		}
 		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
