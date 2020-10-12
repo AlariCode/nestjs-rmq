@@ -25,6 +25,9 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 				topics.forEach(async (topic) => {
 					requestEmitter.on(topic.topic, async (msg: Message) => {
 						try {
+							if (topic.ackOnRead) {
+								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
+							}
 							const result = await this[topic.methodName].apply(
 								this,
 								options?.msgFactory ? options.msgFactory(msg, topic) : RMQMessageFactory(msg, topic)
@@ -43,7 +46,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 						} catch (err) {
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
-							} else {
+							} else if (!topic.ackOnRead) {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						}
