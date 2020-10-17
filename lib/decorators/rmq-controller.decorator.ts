@@ -25,22 +25,35 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 				topics.forEach(async (topic) => {
 					const shouldAckOnRead = topic.ackOnRead || (options?.ackOnRead && topic.ackOnRead !== false);
 					requestEmitter.on(topic.topic, async (msg: Message) => {
+						let alreadyAcked = false;
+						const manualAck = () => {
+							if (alreadyAcked) {
+								return;
+							}
+
+							responseEmitter.emit(ResponseEmmiterResult.ack, msg);
+							alreadyAcked = true;
+						};
+
 						try {
 							if (shouldAckOnRead) {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
+								alreadyAcked = true;
 							}
-							const result = await this[topic.methodName].apply(
-								this,
-								options?.msgFactory ? options.msgFactory(msg, topic) : RMQMessageFactory(msg, topic)
-							);
+							const result = await this[topic.methodName].apply(this, [
+								...(options?.msgFactory
+									? options.msgFactory(msg, topic)
+									: RMQMessageFactory(msg, topic)),
+								manualAck,
+							]);
 							if (msg.properties.replyTo && result) {
-								responseEmitter.emit(ResponseEmmiterResult.success, msg, result, shouldAckOnRead);
+								responseEmitter.emit(ResponseEmmiterResult.success, msg, result, alreadyAcked);
 							} else if (msg.properties.replyTo && result === undefined) {
 								responseEmitter.emit(
 									ResponseEmmiterResult.error,
 									msg,
 									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ),
-									shouldAckOnRead
+									alreadyAcked
 								);
 							} else {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
@@ -48,7 +61,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 						} catch (err) {
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
-							} else if (!shouldAckOnRead) {
+							} else if (!alreadyAcked) {
 								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						}

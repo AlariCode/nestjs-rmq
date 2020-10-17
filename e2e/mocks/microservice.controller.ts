@@ -3,6 +3,7 @@ import { RMQController, RMQError, RMQRoute, Validate } from '../../lib';
 import {
 	AckOnReadContracts,
 	DivideContracts,
+	ManualAckContracts,
 	MultiplyContracts,
 	NotificationContracts,
 	SumContracts,
@@ -60,6 +61,18 @@ export class MicroserviceController {
 	@RMQRoute(AckOnReadContracts.topic, { ackOnRead: true })
 	async ackOnRead(num: number): Promise<number> {
 		return new Promise((resolve, reject) => {
+			setTimeout(function () {
+				resolve(num);
+			}, 300);
+		});
+	}
+
+	@RMQRoute(ManualAckContracts.topic)
+	async manualAck(num: number, manualAck: () => void): Promise<number> {
+		return new Promise((resolve, reject) => {
+			setTimeout(function () {
+				manualAck();
+			}, 100);
 			setTimeout(function () {
 				resolve(num);
 			}, 300);

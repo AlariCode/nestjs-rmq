@@ -3,6 +3,7 @@ import { RMQService } from '../../lib';
 import {
 	AckOnReadContracts,
 	DivideContracts,
+	ManualAckContracts,
 	MultiplyContracts,
 	NotificationContracts,
 	SumContracts,
@@ -48,5 +49,9 @@ export class ApiController {
 
 	async ackOnRead(num: number): Promise<number> {
 		return this.rmq.send<number, number>(AckOnReadContracts.topic, num);
+	}
+
+	async manualAck(num: number): Promise<number> {
+		return this.rmq.send<number, number>(ManualAckContracts.topic, num);
 	}
 }

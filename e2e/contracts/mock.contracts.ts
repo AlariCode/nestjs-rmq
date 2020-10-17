@@ -61,3 +61,7 @@ export namespace TimeOutContracts {
 export namespace AckOnReadContracts {
 	export const topic: string = 'ackOnRead.rpc';
 }
+
+export namespace ManualAckContracts {
+	export const topic: string = 'manualAck.rpc';
+}

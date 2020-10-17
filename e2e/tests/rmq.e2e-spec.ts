@@ -180,6 +180,13 @@ describe('RMQe2e', () => {
 			expect(first).toBe(ResponseEmmiterResult.ack);
 			expect(second).toBe(ResponseEmmiterResult.success);
 		});
+
+		it('acks manually', async () => {
+			await apiController.manualAck(3);
+			const [[first], [second]] = responseEmitterSpy.mock.calls;
+			expect(first).toBe(ResponseEmmiterResult.ack);
+			expect(second).toBe(ResponseEmmiterResult.success);
+		});
 	});
 
 	afterAll(async () => {
