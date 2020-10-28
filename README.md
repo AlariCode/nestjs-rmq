@@ -21,7 +21,7 @@ npm i nestjs-rmq
 
 Setup your connection in root module:
 
-```javascript
+```typescript
 import { RMQModule } from 'nestjs-tests';
 
 @Module({
@@ -51,7 +51,7 @@ Additionally, you can use optional parameters:
 -   **queueName** (string) - Queue name which your microservice would listen and bind topics specified in '@RMQRoute' decorator to this queue. If this parameter is not specified, your microservice could send messages and listen to reply or send notifications, but it couldn't get messages or notifications from other services.
     Example:
 
-```javascript
+```typescript
 {
 	exchangeName: 'my_exchange',
 	connections: [
@@ -76,10 +76,10 @@ Additionally, you can use optional parameters:
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
 -   **logger** (LoggerService) - Your custom logger service that implements `LoggerService` interface. Compatible with Winston and other loggers.
 -   **middleware** (array) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
--   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that extends `RMQErrorHandler`.
+-   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass class that extends `RMQErrorHandler`.
 -   **serviceName** (string) - service name for debugging.
 
-```javascript
+```typescript
 class LogMiddleware extends RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		console.log(msg);
@@ -90,7 +90,7 @@ class LogMiddleware extends RMQPipeClass {
 
 -   **intercepters** (array) - Array of intercepter functions that extends `RMQIntercepterClass` with one method `intercept`. They will be triggered before replying on any message. Trigger order is equal to array order.
 
-```javascript
+```typescript
 export class MyIntercepter extends RMQIntercepterClass {
 	async intercept(res: any, msg: Message, error: Error): Promise<any> {
 		// res - response body
@@ -103,7 +103,7 @@ export class MyIntercepter extends RMQIntercepterClass {
 
 Config example with middleware and intercepters:
 
-```javascript
+```typescript
 import { RMQModule } from 'nestjs-tests';
 
 @Module({
@@ -129,7 +129,7 @@ export class AppModule {}
 
 If you want to inject dependency into RMQ initialization like Configuration service, use `forRootAsync`:
 
-```javascript
+```typescript
 import { RMQModule } from 'nestjs-tests';
 import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
@@ -137,40 +137,39 @@ import { ConfigService } from './config/config.service';
 @Module({
 	imports: [
 		RMQModule.forRootAsync({
-            imports: [ConfigModule],
-            inject: [ConfigService],
-            useFactory: (configService: ConfigService) => {
-                return {
-                    exchangeName: 'test',
-                    connections: [
-                        {
-                            login: 'guest',
-                            password: 'guest',
-                            host: configService.getHost(),
-                        },
-                    ],
-                    queueName: 'test',
-                }
-            }
-        }),
+			imports: [ConfigModule],
+			inject: [ConfigService],
+			useFactory: (configService: ConfigService) => {
+				return {
+					exchangeName: 'test',
+					connections: [
+						{
+							login: 'guest',
+							password: 'guest',
+							host: configService.getHost(),
+						},
+					],
+					queueName: 'test',
+				};
+			},
+		}),
 	],
 })
 export class AppModule {}
 ```
-- **useFactory** - returns `IRMQServiceOptions`.
-- **imports** - additional modules for configuration.
-- **inject** - additional services for usage inside useFactory.
+
+-   **useFactory** - returns `IRMQServiceOptions`.
+-   **imports** - additional modules for configuration.
+-   **inject** - additional services for usage inside useFactory.
 
 ## Sending messages
 
 To send message with RPC topic use send() method in your controller or service:
 
-```javascript
+```typescript
 @Injectable()
 export class ProxyUpdaterService {
-    constructor(
-        private readonly rmqService: RMQService,
-	) {}
+	constructor(private readonly rmqService: RMQService) {}
 
 	myMethod() {
 		this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3]);
@@ -184,7 +183,7 @@ This method returns a Promise. First type - is a type you send, and the second -
 -   [1, 2, 3] - data payload.
     To get a reply:
 
-```javascript
+```typescript
 this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3])
     .then(reply => {
         //...
@@ -193,16 +192,18 @@ this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3])
         //...
     });
 ```
+
 Also you can use send options:
 
-```javascript
+```typescript
 this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3], {
-    expiration: 1000,
-    priority: 1,
-    persistent: true,
-    timeout: 30000
-})
+	expiration: 1000,
+	priority: 1,
+	persistent: true,
+	timeout: 30000,
+});
 ```
+
 -   **expiration** - if supplied, the message will be discarded from a queue once it’s been there longer than the given number of milliseconds.
 -   **priority** - a priority for the message.
 -   **persistent** - if truthy, the message will survive broker restarts provided it’s in a queue that also survives restarts.
@@ -210,8 +211,8 @@ this.rmqService.send<number[], number>('sum.rpc', [1, 2, 3], {
 
 If you want to just notify services:
 
-```javascript
-this.rmqService.notify < string > ('info.none', 'My data');
+```typescript
+const a = this.rmqService.notify<string>('info.none', 'My data');
 ```
 
 This method returns a Promise.
@@ -223,7 +224,7 @@ This method returns a Promise.
 
 To listen for messages bind your controller methods to subscription topics with **RMQRoute()** decorator and you controller to **@RMQController()**:
 
-```javascript
+```typescript
 @RMQController()
 export class AppController {
 	//...
@@ -242,15 +243,15 @@ export class AppController {
 
 Return value will be send back as a reply in RPC topic. In 'sum.rpc' example it will send sum of array values. And sender will get `6`:
 
-```javascript
-this.rmqService.send('sum.rpc', [1, 2, 3]).then(reply => {
+```typescript
+this.rmqService.send('sum.rpc', [1, 2, 3]).then((reply) => {
 	// reply: 6
 });
 ```
 
 Each '@RMQRoute' topic will be automatically bound to queue specified in 'queueName' option. If you want to return an Error just throw it in your method. To set '-x-status-code' use custom RMQError class.
 
-```javascript
+```typescript
 @RMQRoute('my.rpc')
 myMethod(numbers: number[]): number {
 	//...
@@ -260,22 +261,89 @@ myMethod(numbers: number[]): number {
 }
 ```
 
+## Getting message metadata
+
+To get more information from message (not just content) you can use `@RMQMessage` parameter decorator:
+
+```typescript
+import { RMQController, RMQRoute, Validate, RMQMessage, Message } from 'nestjs-rmq';
+
+@RMQRoute('my.rpc')
+myMethod(data: myClass, @RMQMessage msg: Message): number {
+	// ...
+}
+```
+
+You can get all message properties that RMQ gets. Example:
+
+```json
+{
+      fields: {
+        consumerTag: 'amq.ctag-1CtiEOM8ioNFv-bzbOIrGg',
+        deliveryTag: 2,
+        redelivered: false,
+        exchange: 'test',
+        routingKey: 'appid.rpc'
+      },
+      properties: {
+        contentType: undefined,
+        contentEncoding: undefined,
+        headers: {},
+        deliveryMode: undefined,
+        priority: undefined,
+        correlationId: 'ce7df8c5-913c-2808-c6c2-e57cfaba0296',
+        replyTo: 'amq.rabbitmq.reply-to.g2dkABNyYWJiaXRAOTE4N2MzYWMyM2M0AAAenQAAAAAD.bDT8S9ZIl5o3TGjByqeh5g==',
+        expiration: undefined,
+        messageId: undefined,
+        timestamp: undefined,
+        type: undefined,
+        userId: undefined,
+        appId: 'test-service',
+        clusterId: undefined
+      },
+      content: <Buffer 6e 75 6c 6c>
+    }
+```
+
+## Manual message Ack
+
+If you want to use your own ack logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack message that you get with `@RMQMessage`.
+
+```typescript
+import { RMQController, RMQRoute, Validate, RMQMessage, Message, RMQService } from 'nestjs-rmq';
+
+@Controller()
+@RMQController()
+export class MyController {
+	constructor(private readonly rmqService: RMQService) {}
+
+	@RMQRoute('my.rpc', { manualAck: true })
+	myMethod(data: myClass, @RMQMessage msg: Message): number {
+		// Any logic goes here
+		this.rmqService.ack(msg);
+		// Any logic goes here
+	}
+}
+```
+
+## Customizing massage with msgFactory
+
 `@RMQRoute` handlers accepts a single parameter `msg` which is a ampq `message.content` parsed as a JSON. You may want to add additional custom layer to that message and change the way handler is called. For example you may want to structure your message with two different parts: payload (containing actual data) and context (containing request metadata) and process them explicitly in your handler. You can also decorate params passed to the handler. This is the same thing Nest does with `Request` object and decorators like `Param` or `Body`.
 
 To do that, you may pass a param to the `RMQController` a custom message factory `msgFactory?: (msg: Message, topic: IQueueMeta) => any[];`.
 
 The default msgFactory:
 
-```javascript
-@RMQCOntroller({
+```typescript
+@RMQController({
   msgFactory: (msg: Message, topic: IQueueMeta) => [JSON.parse(msg.content.toString())]
 })
 ```
 
-Custom msgFactory using @Payload and @Context decorators: 
+Custom msgFactory using @Payload and @Context decorators:
 
-```javascript
-@RMQCOntroller({
+```typescript
+@RMQController({
   msgFactory: (msg: Message, topic: IQueueMeta) => {
     const parsed = JSON.parse(msg.content.toString());
     const contextIndex = topic.target[METADATA_KEYS.CONTEXT + topic.methodName]?.[0];
@@ -292,24 +360,23 @@ Custom msgFactory using @Payload and @Context decorators:
 })
 ```
 
-
 ## Validating data
 
 NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
 
-```javascript
-import { RMQController, RMQRoute, Validate } from 'nestjs-tests';
+```typescript
+import { RMQController, RMQRoute, Validate } from 'nestjs-rmq';
 
 @Validate()
 @RMQRoute('my.rpc')
 myMethod(data: myClass): number {
-	//...
+	// ...
 }
 ```
 
 Where `myClass` is data class with validation decorators:
 
-```javascript
+```typescript
 import { IsString, MinLength, IsNumber } from 'class-validator';
 
 export class myClass {
@@ -328,7 +395,7 @@ If your input data will be invalid, the library will send back an error without 
 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
-```javascript
+```typescript
 import { RMQController, RMQRoute, RMQPipe } from 'nestjs-tests';
 
 @RMQPipe(MyPipeClass)
@@ -340,7 +407,7 @@ myMethod(numbers: number[]): number {
 
 where `MyPipeClass` extends `RMQPipeClass` with one method `transform`:
 
-```javascript
+```typescript
 class MyPipeClass extends RMQPipeClass {
 	async transfrom(msg: Message): Promise<Message> {
 		// do something
@@ -350,21 +417,22 @@ class MyPipeClass extends RMQPipeClass {
 ```
 
 ## Using RMQErrorHandler
-If you want to use custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass  class that extends `RMQErrorHandler`:
 
-```javascript
+If you want to use custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass class that extends `RMQErrorHandler`:
+
+```typescript
 class MyErrorHandler extends RMQErrorHandler {
-    public static handle(headers: IRmqErrorHeaders): Error | RMQError {
-    // do something
-        return new RMQError(
-            headers['-x-error'],
-            headers['-x-type'],
-            headers['-x-status-code'],
-            headers['-x-data'],
-            headers['-x-service'],
-            headers['-x-host']
-        );
-    }
+	public static handle(headers: IRmqErrorHeaders): Error | RMQError {
+		// do something
+		return new RMQError(
+			headers['-x-error'],
+			headers['-x-type'],
+			headers['-x-status-code'],
+			headers['-x-data'],
+			headers['-x-service'],
+			headers['-x-host']
+		);
+	}
 }
 ```
 
@@ -372,10 +440,8 @@ class MyErrorHandler extends RMQErrorHandler {
 
 RQMService provides additional method to check if you are still connected to RMQ. Although reconnection is automatic, you can provide wrong credentials and reconnection will not help. So to check connection for Docker healthCheck use:
 
-``` javascript
-
+```typescript
 const isConnected = this.rmqService.healthCheck();
-
 ```
 
 If `isConnected` equals `true`, you are successfully connected.
@@ -385,12 +451,17 @@ If `isConnected` equals `true`, you are successfully connected.
 If you want to close connection, for example, if you are using RMQ in testing tools, use `disconnect()` method;
 
 ## Running test
+
 For e2e tests you need to install Docker in your machine and start RabbitMQ docker image with `docker-compose.yml` in `e2e` folder:
+
 ```
 docker-compose up -d
 ```
+
 Then run tests with
+
 ```
 npm run test
 ```
+
 ![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.png)

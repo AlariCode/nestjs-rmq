@@ -24,7 +24,7 @@ import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { IRMQConnection, IRMQServiceOptions } from './interfaces/rmq-options.interface';
 import { requestEmitter, responseEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
 import 'reflect-metadata';
-import { IQueueMeta } from './interfaces/queue-meta.interface';
+import { IRouteMeta } from './interfaces/queue-meta.interface';
 import { IPublishOptions } from './interfaces/rmq-publish-options.interface';
 import { RMQError } from './classes/rmq-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
@@ -38,7 +38,7 @@ export class RMQService {
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
-	private queueMeta: IQueueMeta[];
+	private routeMeta: IRouteMeta[];
 	private logger: LoggerService;
 	private isConnected: boolean = false;
 
@@ -54,7 +54,7 @@ export class RMQService {
 			});
 			const connectionOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
-				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME
+				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
 			this.channel = this.server.createChannel({
@@ -96,7 +96,7 @@ export class RMQService {
 		});
 	}
 
-	private ack(msg: Message): void {
+	public ack(msg: Message): void {
 		this.channel.ack(msg);
 	}
 
@@ -122,6 +122,7 @@ export class RMQService {
 			});
 			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
+				appId: this.options.serviceName,
 				correlationId,
 				...options,
 			});
@@ -150,10 +151,10 @@ export class RMQService {
 			durable: this.options.isQueueDurable ?? true,
 			arguments: this.options.queueArguments ?? {},
 		});
-		this.queueMeta = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-		this.queueMeta = this.queueMeta ?? [];
-		if (this.queueMeta.length > 0) {
-			this.queueMeta.map(async (meta) => {
+		this.routeMeta = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		this.routeMeta = this.routeMeta ?? [];
+		if (this.routeMeta.length > 0) {
+			this.routeMeta.map(async (meta) => {
 				await channel.bindQueue(this.options.queueName, this.options.exchangeName, meta.topic);
 			});
 		}
@@ -196,7 +197,6 @@ export class RMQService {
 				...this.buildError(error),
 			},
 		});
-		this.ack(msg);
 		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
@@ -210,7 +210,7 @@ export class RMQService {
 	}
 
 	private isTopicExists(topic: string): boolean {
-		return !!this.queueMeta.find((x) => x.topic === topic);
+		return !!this.routeMeta.find((x) => x.topic === topic);
 	}
 
 	private async useMiddleware(msg: Message) {

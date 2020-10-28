@@ -1,6 +1,6 @@
 import { Message } from 'amqplib';
-import { IQueueMeta } from './queue-meta.interface';
+import { IRouteMeta } from './queue-meta.interface';
 
 export interface IRMQControllerOptions {
-	msgFactory?: (msg: Message, topic: IQueueMeta) => any[];
+	msgFactory?: (msg: Message, topic: IRouteMeta) => any[];
 }

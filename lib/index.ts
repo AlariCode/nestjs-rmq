@@ -7,6 +7,7 @@ export * from './decorators/rmq-route.decorator';
 export * from './decorators/rmq-controller.decorator';
 export * from './decorators/rmq-pipe.decorator';
 export * from './decorators/validate.decorator';
+export * from './decorators/rmq-message.decorator';
 export * from './classes/rmq-pipe.class';
 export * from './classes/rmq-intercepter.class';
 export * from './classes/rmq-error.class';

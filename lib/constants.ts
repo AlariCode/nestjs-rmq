@@ -1,4 +1,5 @@
 export const RMQ_ROUTES_META: string = 'RMQ_ROUTES_META';
+export const RMQ_MESSAGE_META: string = 'RMQ_MESSAGE_META';
 export const DISCONNECT_EVENT: string = 'disconnect';
 export const CONNECT_EVENT: string = 'connect';
 export const DISCONNECT_MESSAGE: string = 'Disconnected from RMQ. Trying to reconnect';
@@ -19,5 +20,5 @@ export const DEFAULT_PREFETCH_COUNT: number = 0;
 
 export enum ERROR_TYPE {
 	TRANSPORT = 'TRANSPORT',
-	RMQ = 'RMQ'
+	RMQ = 'RMQ',
 }

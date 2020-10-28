@@ -1,11 +1,21 @@
 import { Controller } from '@nestjs/common';
-import { RMQController, RMQError, RMQRoute, Validate } from '../../lib';
-import { DivideContracts, MultiplyContracts, NotificationContracts, SumContracts, TimeOutContracts } from '../contracts/mock.contracts';
+import { RMQMessage, RMQController, RMQError, RMQRoute, Validate, Message, RMQService } from '../../lib';
+import {
+	DivideContracts,
+	MultiplyContracts,
+	NotificationContracts,
+	SumContracts,
+	TimeOutContracts,
+	AppIdContracts,
+	ManualAckContracts,
+} from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
 
 @Controller()
 @RMQController()
 export class MicroserviceController {
+	constructor(private readonly rmqService: RMQService) {}
+
 	@RMQRoute(SumContracts.topic)
 	@Validate()
 	sumRpc({ arrayToSum }: SumContracts.Request): SumContracts.Response {
@@ -38,7 +48,7 @@ export class MicroserviceController {
 	@RMQRoute(DivideContracts.topic)
 	@Validate()
 	divide({ first, second }: DivideContracts.Request): DivideContracts.Response {
-		return { result: first/second };
+		return { result: first / second };
 	}
 
 	@RMQRoute(TimeOutContracts.topic)
@@ -48,5 +58,16 @@ export class MicroserviceController {
 				resolve(num);
 			}, 3000);
 		});
+	}
+
+	@RMQRoute(AppIdContracts.topic)
+	appId(@RMQMessage msg: Message): AppIdContracts.Response {
+		return { appId: msg.properties.appId };
+	}
+
+	@RMQRoute(ManualAckContracts.topic, { manualAck: true })
+	manualAck(@RMQMessage msg: Message): ManualAckContracts.Response {
+		this.rmqService.ack(msg);
+		return { appId: msg.properties.appId };
 	}
 }

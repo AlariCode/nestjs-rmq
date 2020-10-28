@@ -57,12 +57,22 @@ describe('RMQe2e', () => {
 			const { result } = await apiController.sumSuccess([1, 2, 3]);
 			expect(result).toBe(6);
 		});
+		it('successful appId from message', async () => {
+			const { appId } = await apiController.appId();
+			expect(appId).toBe('test-service');
+		});
+		it('manualAck', async () => {
+			const { appId } = await apiController.manualAck();
+			expect(appId).toBe('test-service');
+		});
 		it('request validation failed', async () => {
 			try {
 				const { result } = await apiController.sumFailed(['1', '2', '3']);
 				expect(result).not.toBe(6);
 			} catch (error) {
-				expect(error.message).toBe('each value in arrayToSum must be a number conforming to the specified constraints');
+				expect(error.message).toBe(
+					'each value in arrayToSum must be a number conforming to the specified constraints'
+				);
 				expect(error.type).toBeUndefined();
 				expect(error.code).toBeUndefined();
 				expect(error.data).toBeUndefined();
@@ -113,11 +123,10 @@ describe('RMQe2e', () => {
 			try {
 				const num = await apiController.timeOutMessage(10);
 				expect(num).toBe(10);
-			} catch(e) {
+			} catch (e) {
 				expect(e.message).toBeNull();
 			}
 		});
-
 	});
 
 	describe('none', () => {

@@ -3,9 +3,12 @@ import { IsNumber, IsString } from 'class-validator';
 export namespace SumContracts {
 	export const topic: string = 'sum.rpc';
 	export class Request {
-		@IsNumber({},{
-			each: true
-		})
+		@IsNumber(
+			{},
+			{
+				each: true,
+			}
+		)
 		arrayToSum: number[];
 	}
 	export class Response {
@@ -16,9 +19,12 @@ export namespace SumContracts {
 export namespace MultiplyContracts {
 	export const topic: string = 'multiply.rpc';
 	export class Request {
-		@IsNumber({},{
-			each: true
-		})
+		@IsNumber(
+			{},
+			{
+				each: true,
+			}
+		)
 		arrayToMultiply: number[];
 	}
 	export class Response {
@@ -49,5 +55,19 @@ export namespace NotificationContracts {
 }
 
 export namespace TimeOutContracts {
-    export const topic: string = 'timeout.rpc';
+	export const topic: string = 'timeout.rpc';
+}
+
+export namespace AppIdContracts {
+	export const topic: string = 'appid.rpc';
+	export class Response {
+		appId: string;
+	}
+}
+
+export namespace ManualAckContracts {
+	export const topic: string = 'manualAck.rpc';
+	export class Response {
+		appId: string;
+	}
 }

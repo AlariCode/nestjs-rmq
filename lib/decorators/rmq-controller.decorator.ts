@@ -1,34 +1,47 @@
 import { Logger } from '@nestjs/common';
 
-import { ERROR_NO_ROUTE_FOR_CONTROLLER, ERROR_TYPE, ERROR_UNDEFINED_FROM_RPC, RMQ_ROUTES_META } from '../constants';
-import { IQueueMeta } from '../interfaces/queue-meta.interface';
+import {
+	ERROR_NO_ROUTE_FOR_CONTROLLER,
+	ERROR_TYPE,
+	ERROR_UNDEFINED_FROM_RPC,
+	RMQ_MESSAGE_META,
+	RMQ_ROUTES_META,
+} from '../constants';
+import { IRouteMeta } from '../interfaces/queue-meta.interface';
 import { requestEmitter, responseEmitter, ResponseEmmiterResult } from '../emmiters/router.emmiter';
 import { RMQService } from '../rmq.service';
 import { Message } from 'amqplib';
 import { RMQError } from '..';
 import { IRMQControllerOptions } from '../interfaces/rmq-controller-options.interface';
 
-export const RMQMessageFactory = (msg: Message, topic: IQueueMeta) => {
+export const RMQMessageFactory = (msg: Message, route: IRouteMeta) => {
 	return [JSON.parse(msg.content.toString())];
 };
 
 export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 	return function (target: any) {
-		let topics: IQueueMeta[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-		topics = topics ? topics.filter((topic) => topic.target === target.prototype) : [];
-		if (topics.length === 0) {
+		let routes: IRouteMeta[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		routes = routes ? routes.filter((route) => route.target === target.prototype) : [];
+		if (routes.length === 0) {
 			Logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
 		target = class extends (target as { new (...args): any }) {
 			constructor(...args: any) {
 				super(...args);
-				topics.forEach(async (topic) => {
-					requestEmitter.on(topic.topic, async (msg: Message) => {
+				routes.forEach(async (route) => {
+					const messageParams: number[] =
+						Reflect.getOwnMetadata(RMQ_MESSAGE_META, route.target, route.methodName) || [];
+					requestEmitter.on(route.topic, async (msg: Message) => {
 						try {
-							const result = await this[topic.methodName].apply(
-								this,
-								options?.msgFactory ? options.msgFactory(msg, topic) : RMQMessageFactory(msg, topic)
-							);
+							const funcArgs = options?.msgFactory
+								? options.msgFactory(msg, route)
+								: RMQMessageFactory(msg, route);
+							if (messageParams.length > 0) {
+								for (const param of messageParams) {
+									funcArgs[param] = msg;
+								}
+							}
+							const result = await this[route.methodName].apply(this, funcArgs);
 							if (msg.properties.replyTo && result) {
 								responseEmitter.emit(ResponseEmmiterResult.success, msg, result);
 							} else if (msg.properties.replyTo && result === undefined) {
@@ -37,15 +50,14 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 									msg,
 									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ)
 								);
-							} else {
-								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
 						} catch (err) {
 							if (msg.properties.replyTo) {
 								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
-							} else {
-								responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 							}
+						}
+						if (!route.options?.manualAck) {
+							responseEmitter.emit(ResponseEmmiterResult.ack, msg);
 						}
 					});
 				});
