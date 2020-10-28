@@ -278,31 +278,31 @@ You can get all message properties that RMQ gets. Example:
 
 ```json
 {
-      fields: {
-        consumerTag: 'amq.ctag-1CtiEOM8ioNFv-bzbOIrGg',
-        deliveryTag: 2,
-        redelivered: false,
-        exchange: 'test',
-        routingKey: 'appid.rpc'
-      },
-      properties: {
-        contentType: undefined,
-        contentEncoding: undefined,
-        headers: {},
-        deliveryMode: undefined,
-        priority: undefined,
-        correlationId: 'ce7df8c5-913c-2808-c6c2-e57cfaba0296',
-        replyTo: 'amq.rabbitmq.reply-to.g2dkABNyYWJiaXRAOTE4N2MzYWMyM2M0AAAenQAAAAAD.bDT8S9ZIl5o3TGjByqeh5g==',
-        expiration: undefined,
-        messageId: undefined,
-        timestamp: undefined,
-        type: undefined,
-        userId: undefined,
-        appId: 'test-service',
-        clusterId: undefined
-      },
-      content: <Buffer 6e 75 6c 6c>
-    }
+	"fields": {
+		"consumerTag": "amq.ctag-1CtiEOM8ioNFv-bzbOIrGg",
+		"deliveryTag": 2,
+		"redelivered": false,
+		"exchange": "test",
+		"routingKey": "appid.rpc"
+	},
+	"properties": {
+		"contentType": "undefined",
+		"contentEncoding": "undefined",
+		"headers": {},
+		"deliveryMode": "undefined",
+		"priority": "undefined",
+		"correlationId": "ce7df8c5-913c-2808-c6c2-e57cfaba0296",
+		"replyTo": "amq.rabbitmq.reply-to.g2dkABNyYWJiaXRAOTE4N2MzYWMyM2M0AAAenQAAAAAD.bDT8S9ZIl5o3TGjByqeh5g==",
+		"expiration": "undefined",
+		"messageId": "undefined",
+		"timestamp": "undefined",
+		"type": "undefined",
+		"userId": "undefined",
+		"appId": "test-service",
+		"clusterId": "undefined"
+	},
+	"content": "<Buffer 6e 75 6c 6c>"
+}
 ```
 
 ## Manual message Ack

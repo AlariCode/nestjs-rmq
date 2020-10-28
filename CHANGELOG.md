@@ -1,5 +1,9 @@
 # Change log
 
+## 1.13.1
+
+-   Added timestamp to message
+
 ## 1.13.0
 
 -   Added manual message acknowledgement

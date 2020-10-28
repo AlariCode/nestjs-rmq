@@ -123,6 +123,7 @@ export class RMQService {
 			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
 				appId: this.options.serviceName,
+				timestamp: new Date().getTime(),
 				correlationId,
 				...options,
 			});
