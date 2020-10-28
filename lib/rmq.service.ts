@@ -132,7 +132,11 @@ export class RMQService {
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
-		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), options);
+		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+			appId: this.options.serviceName,
+			timestamp: new Date().getTime(),
+			...options,
+		});
 		this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
 	}
 

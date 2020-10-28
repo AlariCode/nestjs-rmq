@@ -1,8 +1,9 @@
 # Change log
 
-## 1.13.1
+## 1.13.2
 
 -   Added timestamp to message
+-   Added appId and timestamp to notify
 
 ## 1.13.0
 
