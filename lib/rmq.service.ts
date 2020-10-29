@@ -11,7 +11,6 @@ import {
 	ERROR_NONE_RPC,
 	ERROR_TIMEOUT,
 	ERROR_TYPE,
-	EXCHANGE_TYPE,
 	REPLY_QUEUE,
 	RMQ_ROUTES_META,
 	DEFAULT_HEARTBEAT_TIME,
@@ -60,7 +59,7 @@ export class RMQService {
 			this.channel = this.server.createChannel({
 				json: false,
 				setup: async (channel: Channel) => {
-					await channel.assertExchange(this.options.exchangeName, EXCHANGE_TYPE, {
+					await channel.assertExchange(this.options.exchangeName, 'topic', {
 						durable: this.options.isExchangeDurable ?? true,
 					});
 					await channel.prefetch(

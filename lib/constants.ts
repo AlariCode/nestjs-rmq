@@ -5,7 +5,6 @@ export const CONNECT_EVENT: string = 'connect';
 export const DISCONNECT_MESSAGE: string = 'Disconnected from RMQ. Trying to reconnect';
 export const CONNECTED_MESSAGE: string = 'Successfully connected to RMQ';
 export const REPLY_QUEUE: string = 'amq.rabbitmq.reply-to';
-export const EXCHANGE_TYPE: string = 'topic';
 export const ERROR_NONE_RPC: string = 'This is none RPC queue. Use notify() method instead';
 // tslint:disable-next-line: quotemark
 export const ERROR_NO_ROUTE: string = "Requested service doesn't have RMQRoute with this path";
