@@ -13,6 +13,7 @@ import { RMQService } from '../rmq.service';
 import { Message } from 'amqplib';
 import { RMQError } from '..';
 import { IRMQControllerOptions } from '../interfaces/rmq-controller-options.interface';
+import { ExtendedMessage } from '../classes/rmq-extended-message.class';
 
 export const RMQMessageFactory = (msg: Message, route: IRouteMeta) => {
 	return [JSON.parse(msg.content.toString())];
@@ -25,7 +26,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 		if (routes.length === 0) {
 			Logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
-		target = class extends (target as { new (...args): any }) {
+		target = class extends (target as { new(...args): any }) {
 			constructor(...args: any) {
 				super(...args);
 				routes.forEach(async (route) => {
@@ -38,7 +39,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 								: RMQMessageFactory(msg, route);
 							if (messageParams.length > 0) {
 								for (const param of messageParams) {
-									funcArgs[param] = msg;
+									funcArgs[param] = new ExtendedMessage(msg);
 								}
 							}
 							const result = await this[route.methodName].apply(this, funcArgs);

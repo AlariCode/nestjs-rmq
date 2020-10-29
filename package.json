@@ -1,12 +1,12 @@
 {
 	"name": "nestjs-rmq",
-	"version": "1.13.2",
+	"version": "1.14.0",
 	"description": "NestJS RabbitMQ Module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",
 	"scripts": {
 		"prepare": "tsc -p tsconfig.json",
-		"test": "jest --config e2e/jest-e2e.json"
+		"test": "jest --config e2e/jest-e2e.json --runInBand"
 	},
 	"author": "Anton Larichev <antonlarichev@gmail.com>",
 	"keywords": [
@@ -28,6 +28,7 @@
 	"dependencies": {
 		"amqp-connection-manager": "^3.2.1",
 		"amqplib": "^0.6.0",
+		"@types/amqplib": "^0.5.15",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.12.2",
 		"reflect-metadata": "^0.1.13"
@@ -38,7 +39,6 @@
 		"@nestjs/platform-express": "^7.4.4",
 		"@nestjs/testing": "^7.4.4",
 		"@types/amqp-connection-manager": "^2.0.9",
-		"@types/amqplib": "^0.5.13",
 		"@types/chalk": "^2.2.0",
 		"@types/jest": "^25.1.4",
 		"@types/node": "^13.9.5",

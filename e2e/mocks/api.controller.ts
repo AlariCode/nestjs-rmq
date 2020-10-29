@@ -2,6 +2,7 @@ import { Controller } from '@nestjs/common';
 import { RMQService } from '../../lib';
 import {
 	AppIdContracts,
+	DebugContracts,
 	DivideContracts,
 	ManualAckContracts,
 	MultiplyContracts,
@@ -12,7 +13,7 @@ import {
 
 @Controller()
 export class ApiController {
-	constructor(private readonly rmq: RMQService) {}
+	constructor(private readonly rmq: RMQService) { }
 
 	async sumSuccess(arrayToSum: number[]): Promise<SumContracts.Response> {
 		return this.rmq.send<SumContracts.Request, SumContracts.Response>(SumContracts.topic, { arrayToSum });
@@ -53,5 +54,9 @@ export class ApiController {
 
 	async manualAck(): Promise<ManualAckContracts.Response> {
 		return this.rmq.send<null, ManualAckContracts.Response>(ManualAckContracts.topic, null);
+	}
+
+	async debug(): Promise<DebugContracts.Response> {
+		return this.rmq.send<DebugContracts.Request, DebugContracts.Response>(DebugContracts.topic, { prop1: [1], prop2: Buffer.from('test buffer') });
 	}
 }

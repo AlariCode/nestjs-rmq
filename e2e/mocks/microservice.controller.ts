@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { RMQMessage, RMQController, RMQError, RMQRoute, Validate, Message, RMQService } from '../../lib';
+import { RMQMessage, RMQController, RMQError, RMQRoute, Validate, ExtendedMessage, RMQService } from '../../lib';
 import {
 	DivideContracts,
 	MultiplyContracts,
@@ -8,13 +8,14 @@ import {
 	TimeOutContracts,
 	AppIdContracts,
 	ManualAckContracts,
+	DebugContracts,
 } from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
 
 @Controller()
 @RMQController()
 export class MicroserviceController {
-	constructor(private readonly rmqService: RMQService) {}
+	constructor(private readonly rmqService: RMQService) { }
 
 	@RMQRoute(SumContracts.topic)
 	@Validate()
@@ -61,13 +62,18 @@ export class MicroserviceController {
 	}
 
 	@RMQRoute(AppIdContracts.topic)
-	appId(@RMQMessage msg: Message): AppIdContracts.Response {
+	appId(@RMQMessage msg: ExtendedMessage): AppIdContracts.Response {
 		return { appId: msg.properties.appId };
 	}
 
 	@RMQRoute(ManualAckContracts.topic, { manualAck: true })
-	manualAck(@RMQMessage msg: Message): ManualAckContracts.Response {
+	manualAck(@RMQMessage msg: ExtendedMessage): ManualAckContracts.Response {
 		this.rmqService.ack(msg);
 		return { appId: msg.properties.appId };
+	}
+
+	@RMQRoute(DebugContracts.topic)
+	debugMessage(@RMQMessage msg: ExtendedMessage): DebugContracts.Response {
+		return { debugString: msg.getDebugString() };
 	}
 }

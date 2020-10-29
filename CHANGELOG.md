@@ -1,5 +1,11 @@
 # Change log
 
+
+## 1.14.0
+
+-   Added Extended message and debug method
+-   Added types to package
+
 ## 1.13.2
 
 -   Added timestamp to message

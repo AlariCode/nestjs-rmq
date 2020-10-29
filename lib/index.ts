@@ -12,4 +12,5 @@ export * from './classes/rmq-pipe.class';
 export * from './classes/rmq-intercepter.class';
 export * from './classes/rmq-error.class';
 export * from './classes/rmq-error-handler.class';
+export * from './classes/rmq-extended-message.class';
 export { Message } from 'amqplib';

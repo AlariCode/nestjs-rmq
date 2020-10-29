@@ -71,3 +71,14 @@ export namespace ManualAckContracts {
 		appId: string;
 	}
 }
+
+export namespace DebugContracts {
+	export const topic: string = 'debug.rpc';
+	export class Request {
+		prop1: number[];
+		prop2: Buffer;
+	}
+	export class Response {
+		debugString: string;
+	}
+}

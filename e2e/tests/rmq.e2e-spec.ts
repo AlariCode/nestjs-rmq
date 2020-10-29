@@ -65,6 +65,10 @@ describe('RMQe2e', () => {
 			const { appId } = await apiController.manualAck();
 			expect(appId).toBe('test-service');
 		});
+		it('debug message', async () => {
+			const { debugString } = await apiController.debug();
+			expect(debugString).toContain('\"message\":{\"prop1\":[1],\"prop2\":\"Buffer - length 11\"}');
+		});
 		it('request validation failed', async () => {
 			try {
 				const { result } = await apiController.sumFailed(['1', '2', '3']);

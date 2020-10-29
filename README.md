@@ -266,10 +266,10 @@ myMethod(numbers: number[]): number {
 To get more information from message (not just content) you can use `@RMQMessage` parameter decorator:
 
 ```typescript
-import { RMQController, RMQRoute, Validate, RMQMessage, Message } from 'nestjs-rmq';
+import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage } from 'nestjs-rmq';
 
 @RMQRoute('my.rpc')
-myMethod(data: myClass, @RMQMessage msg: Message): number {
+myMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
 	// ...
 }
 ```
@@ -310,7 +310,7 @@ You can get all message properties that RMQ gets. Example:
 If you want to use your own ack logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack message that you get with `@RMQMessage`.
 
 ```typescript
-import { RMQController, RMQRoute, Validate, RMQMessage, Message, RMQService } from 'nestjs-rmq';
+import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
 
 @Controller()
 @RMQController()
@@ -318,13 +318,63 @@ export class MyController {
 	constructor(private readonly rmqService: RMQService) {}
 
 	@RMQRoute('my.rpc', { manualAck: true })
-	myMethod(data: myClass, @RMQMessage msg: Message): number {
+	myMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
 		// Any logic goes here
 		this.rmqService.ack(msg);
 		// Any logic goes here
 	}
 }
 ```
+
+## Send debug information to error or log
+
+`ExtendedMessage` has additional method to get all data from message to debug it. Also it serializes content and hides Buffers, because they can be massive. Then you can put all your debug info into Error or log it.
+
+```typescript
+import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
+
+@Controller()
+@RMQController()
+export class MyController {
+	constructor(private readonly rmqService: RMQService) {}
+
+	@RMQRoute('my.rpc')
+	myMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
+		// ...
+		console.log(msg.getDebugString());
+		// ...
+	}
+}
+```
+
+You will get info about message, field and properties:
+
+``` json
+{
+    "fields": {
+        "consumerTag": "amq.ctag-Q-l8A4Oh76cUkIKbHWNZzA",
+        "deliveryTag": 4,
+        "redelivered": false,
+        "exchange": "test",
+        "routingKey": "debug.rpc"
+    },
+    "properties": {
+        "headers": {},
+        "correlationId": "388236ad-6f01-3de5-975d-f9665b73de33",
+        "replyTo": "amq.rabbitmq.reply-to.g1hkABNyYWJiaXRANzQwNDVlYWQ5ZTgwAAAG2AAAAABfmnkW.9X12ySrcM6BOXpGXKkR+Yg==",
+        "timestamp": 1603959908996,
+        "appId": "test-service"
+    },
+    "message": {
+        "prop1": [
+            1
+        ],
+        "prop2": "Buffer - length 11"
+    }
+}
+```
+
+
 
 ## Customizing massage with msgFactory
 
