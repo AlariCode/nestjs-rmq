@@ -95,8 +95,12 @@ export class RMQService {
 		});
 	}
 
-	public ack(msg: Message): void {
-		this.channel.ack(msg);
+	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
+		return this.channel.ack(...params);
+	}
+
+	public nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
+		return this.channel.nack(...params);
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
