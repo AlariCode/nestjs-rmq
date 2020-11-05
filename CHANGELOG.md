@@ -1,5 +1,10 @@
 # Change log
 
+## 1.15.0
+
+-   Added nack method (thx @mikelavigne)
+-   Added more publish options (thx @mikelavigne)
+-   Added exchange options (thx @mikelavigne)
 
 ## 1.14.0
 
