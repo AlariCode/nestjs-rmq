@@ -73,6 +73,7 @@ Additionally, you can use optional parameters:
 -   **messagesTimeout** (number) - Number of milliseconds 'post' method will wait for the response before a timeout error. Default is 30 000.
 -   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
 -   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
+-   **exchangeOptions** (Options.AssertExchange) - You can read more about exchange options [here](squaremobius.net/amqp.node/channel_api.html#channel_assertExchange).
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
 -   **logger** (LoggerService) - Your custom logger service that implements `LoggerService` interface. Compatible with Winston and other loggers.
 -   **middleware** (array) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
@@ -349,32 +350,28 @@ export class MyController {
 
 You will get info about message, field and properties:
 
-``` json
+```json
 {
-    "fields": {
-        "consumerTag": "amq.ctag-Q-l8A4Oh76cUkIKbHWNZzA",
-        "deliveryTag": 4,
-        "redelivered": false,
-        "exchange": "test",
-        "routingKey": "debug.rpc"
-    },
-    "properties": {
-        "headers": {},
-        "correlationId": "388236ad-6f01-3de5-975d-f9665b73de33",
-        "replyTo": "amq.rabbitmq.reply-to.g1hkABNyYWJiaXRANzQwNDVlYWQ5ZTgwAAAG2AAAAABfmnkW.9X12ySrcM6BOXpGXKkR+Yg==",
-        "timestamp": 1603959908996,
-        "appId": "test-service"
-    },
-    "message": {
-        "prop1": [
-            1
-        ],
-        "prop2": "Buffer - length 11"
-    }
+	"fields": {
+		"consumerTag": "amq.ctag-Q-l8A4Oh76cUkIKbHWNZzA",
+		"deliveryTag": 4,
+		"redelivered": false,
+		"exchange": "test",
+		"routingKey": "debug.rpc"
+	},
+	"properties": {
+		"headers": {},
+		"correlationId": "388236ad-6f01-3de5-975d-f9665b73de33",
+		"replyTo": "amq.rabbitmq.reply-to.g1hkABNyYWJiaXRANzQwNDVlYWQ5ZTgwAAAG2AAAAABfmnkW.9X12ySrcM6BOXpGXKkR+Yg==",
+		"timestamp": 1603959908996,
+		"appId": "test-service"
+	},
+	"message": {
+		"prop1": [1],
+		"prop2": "Buffer - length 11"
+	}
 }
 ```
-
-
 
 ## Customizing massage with msgFactory
 
