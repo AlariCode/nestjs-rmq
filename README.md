@@ -305,9 +305,9 @@ You can get all message properties that RMQ gets. Example:
 }
 ```
 
-## Manual message Ack
+## Manual message Ack/Nack
 
-If you want to use your own ack logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack message that you get with `@RMQMessage`.
+If you want to use your own [ack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack)/[nack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_ack) logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack/nack message that you get with `@RMQMessage`.
 
 ```typescript
 import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
@@ -321,6 +321,13 @@ export class MyController {
 	myMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
 		// Any logic goes here
 		this.rmqService.ack(msg);
+		// Any logic goes here
+	}
+
+	@RMQRoute('my.other-rpc', { manualAck: true })
+	myOtherMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
+		// Any logic goes here
+		this.rmqService.nack(msg);
 		// Any logic goes here
 	}
 }
