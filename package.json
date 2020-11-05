@@ -28,7 +28,6 @@
 	"dependencies": {
 		"amqp-connection-manager": "^3.2.1",
 		"amqplib": "^0.6.0",
-		"@types/amqplib": "^0.5.15",
 		"chalk": "^4.1.0",
 		"class-validator": "^0.12.2",
 		"reflect-metadata": "^0.1.13"
@@ -38,6 +37,7 @@
 		"@nestjs/core": "^7.4.4",
 		"@nestjs/platform-express": "^7.4.4",
 		"@nestjs/testing": "^7.4.4",
+		"@types/amqplib": "^0.5.15",
 		"@types/amqp-connection-manager": "^2.0.9",
 		"@types/chalk": "^2.2.0",
 		"@types/jest": "^25.1.4",

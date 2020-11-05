@@ -59,9 +59,14 @@ export class RMQService {
 			this.channel = this.server.createChannel({
 				json: false,
 				setup: async (channel: Channel) => {
-					await channel.assertExchange(this.options.exchangeName, 'topic', {
-						durable: this.options.isExchangeDurable ?? true,
-					});
+					await channel.assertExchange(
+						this.options.exchangeName,
+						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
+						{
+							...this.options.exchangeOptions,
+							durable: this.options.isExchangeDurable ?? true,
+						}
+					);
 					await channel.prefetch(
 						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
 						this.options.isGlobalPrefetchCount ?? false
