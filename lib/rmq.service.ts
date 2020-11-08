@@ -45,6 +45,23 @@ export class RMQService {
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
+
+		this.validateOptions();
+	}
+
+	private validateOptions(): void {
+		this.options.connections.map((connection) => {
+			if (connection.host === undefined) {
+				this.logger.error(
+					'Check your configuration, RabbitMQ server address not specified! host is undefined.'
+				);
+			}
+		});
+		if (this.options.serviceName === undefined) {
+			this.logger.warn(
+				'Check your configuration, RabbitMQ service name not specified! serviceName is undefined.'
+			);
+		}
 	}
 
 	public async init(): Promise<void> {
@@ -97,6 +114,15 @@ export class RMQService {
 					await channel.prefetch(
 						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
 						this.options.isGlobalPrefetchCount ?? false
+					);
+					await channel.consume(
+						this.replyQueue,
+						(msg: Message) => {
+							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
+						},
+						{
+							noAck: true,
+						}
 					);
 					if (this.options.queueName) {
 						this.listen(channel);
