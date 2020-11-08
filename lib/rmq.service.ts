@@ -33,7 +33,8 @@ import { RQMColorLogger } from './helpers/logger';
 @Injectable()
 export class RMQService {
 	private server: AmqpConnectionManager = null;
-	private channel: ChannelWrapper = null;
+	private clientChannel: ChannelWrapper = null;
+	private subscriptionChannel: ChannelWrapper = null;
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
@@ -56,7 +57,7 @@ export class RMQService {
 				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
-			this.channel = this.server.createChannel({
+			this.clientChannel = this.server.createChannel({
 				json: false,
 				setup: async (channel: Channel) => {
 					await channel.assertExchange(
@@ -80,6 +81,23 @@ export class RMQService {
 							noAck: true,
 						}
 					);
+				},
+			});
+			this.subscriptionChannel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.assertExchange(
+						this.options.exchangeName,
+						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
+						{
+							...this.options.exchangeOptions,
+							durable: this.options.isExchangeDurable ?? true,
+						}
+					);
+					await channel.prefetch(
+						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
+						this.options.isGlobalPrefetchCount ?? false
+					);
 					if (this.options.queueName) {
 						this.listen(channel);
 					}
@@ -87,6 +105,7 @@ export class RMQService {
 					resolve();
 				},
 			});
+
 			this.server.on(CONNECT_EVENT, (connection) => {
 				this.isConnected = true;
 				this.attachEmmitters();
@@ -101,11 +120,11 @@ export class RMQService {
 	}
 
 	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
-		return this.channel.ack(...params);
+		return this.subscriptionChannel.ack(...params);
 	}
 
 	public nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
-		return this.channel.nack(...params);
+		return this.subscriptionChannel.nack(...params);
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
@@ -128,7 +147,7 @@ export class RMQService {
 					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
 				}
 			});
-			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+			await this.clientChannel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
 				appId: this.options.serviceName,
 				timestamp: new Date().getTime(),
@@ -140,7 +159,7 @@ export class RMQService {
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
-		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+		await this.clientChannel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 			appId: this.options.serviceName,
 			timestamp: new Date().getTime(),
 			...options,
@@ -155,7 +174,8 @@ export class RMQService {
 	public async disconnect() {
 		this.detachEmitters();
 		this.sendResponseEmitter.removeAllListeners();
-		await this.channel.close();
+		await this.clientChannel.close();
+		await this.subscriptionChannel.close();
 		await this.server.close();
 	}
 
@@ -204,7 +224,7 @@ export class RMQService {
 
 	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		res = await this.intercept(res, msg, error);
-		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
+		await this.subscriptionChannel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
 			headers: {
 				...this.buildError(error),
