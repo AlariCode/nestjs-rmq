@@ -1,5 +1,10 @@
 # Change log
 
+## 1.16.0
+
+-   Added warning message if service name is not specified (thx @milovidov983)
+-   Client and subscription channels splitted for performance (thx @milovidov983)
+
 ## 1.15.0
 
 -   Added nack method (thx @mikelavigne)

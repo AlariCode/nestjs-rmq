@@ -67,7 +67,7 @@ describe('RMQe2e', () => {
 		});
 		it('debug message', async () => {
 			const { debugString } = await apiController.debug();
-			expect(debugString).toContain('\"message\":{\"prop1\":[1],\"prop2\":\"Buffer - length 11\"}');
+			expect(debugString).toContain('"message":{"prop1":[1],"prop2":"Buffer - length 11"}');
 		});
 		it('request validation failed', async () => {
 			try {
@@ -136,6 +136,7 @@ describe('RMQe2e', () => {
 	describe('none', () => {
 		it('successful notify()', async () => {
 			const res = await apiController.notificationSuccess('test');
+			await delay(1000);
 			expect(console.log).toBeCalledTimes(1);
 			expect(console.log).toHaveBeenCalledWith('test');
 			expect(res).toBeUndefined();

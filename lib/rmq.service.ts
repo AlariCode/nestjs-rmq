@@ -29,11 +29,13 @@ import { RMQError } from './classes/rmq-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { hostname } from 'os';
 import { RQMColorLogger } from './helpers/logger';
+import { validateOptions } from './option.validator';
 
 @Injectable()
 export class RMQService {
 	private server: AmqpConnectionManager = null;
-	private channel: ChannelWrapper = null;
+	private clientChannel: ChannelWrapper = null;
+	private subscriptionChannel: ChannelWrapper = null;
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
@@ -44,10 +46,11 @@ export class RMQService {
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
+		validateOptions(this.options, this.logger);
 	}
 
 	public async init(): Promise<void> {
-		return new Promise((resolve) => {
+		return new Promise(async (resolve) => {
 			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 				return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 			});
@@ -56,40 +59,10 @@ export class RMQService {
 				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
-			this.channel = this.server.createChannel({
-				json: false,
-				setup: async (channel: Channel) => {
-					await channel.assertExchange(
-						this.options.exchangeName,
-						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
-						{
-							...this.options.exchangeOptions,
-							durable: this.options.isExchangeDurable ?? true,
-						}
-					);
-					await channel.prefetch(
-						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
-						this.options.isGlobalPrefetchCount ?? false
-					);
-					await channel.consume(
-						this.replyQueue,
-						(msg: Message) => {
-							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
-						},
-						{
-							noAck: true,
-						}
-					);
-					if (this.options.queueName) {
-						this.listen(channel);
-					}
-					this.logger.log(CONNECTED_MESSAGE);
-					resolve();
-				},
-			});
+
 			this.server.on(CONNECT_EVENT, (connection) => {
 				this.isConnected = true;
-				this.attachEmmitters();
+				this.attachEmitters();
 			});
 			this.server.on(DISCONNECT_EVENT, (err) => {
 				this.isConnected = false;
@@ -97,15 +70,18 @@ export class RMQService {
 				this.logger.error(DISCONNECT_MESSAGE);
 				this.logger.error(err.err);
 			});
+
+			await Promise.all([this.createClientChannel(), this.createSubscriptionChannel()]);
+			resolve();
 		});
 	}
 
 	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
-		return this.channel.ack(...params);
+		return this.subscriptionChannel.ack(...params);
 	}
 
 	public nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
-		return this.channel.nack(...params);
+		return this.subscriptionChannel.nack(...params);
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
@@ -128,7 +104,7 @@ export class RMQService {
 					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
 				}
 			});
-			await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+			await this.clientChannel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 				replyTo: this.replyQueue,
 				appId: this.options.serviceName,
 				timestamp: new Date().getTime(),
@@ -140,7 +116,7 @@ export class RMQService {
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
-		await this.channel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
+		await this.clientChannel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 			appId: this.options.serviceName,
 			timestamp: new Date().getTime(),
 			...options,
@@ -155,8 +131,56 @@ export class RMQService {
 	public async disconnect() {
 		this.detachEmitters();
 		this.sendResponseEmitter.removeAllListeners();
-		await this.channel.close();
+		await this.clientChannel.close();
+		await this.subscriptionChannel.close();
 		await this.server.close();
+	}
+
+	private async createSubscriptionChannel() {
+		return new Promise((resolve) => {
+			this.subscriptionChannel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.assertExchange(
+						this.options.exchangeName,
+						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
+						{
+							...this.options.exchangeOptions,
+							durable: this.options.isExchangeDurable ?? true,
+						}
+					);
+					await channel.prefetch(
+						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
+						this.options.isGlobalPrefetchCount ?? false
+					);
+					if (this.options.queueName) {
+						this.listen(channel);
+					}
+					this.logger.log(CONNECTED_MESSAGE);
+					resolve();
+				},
+			});
+		});
+	}
+
+	private async createClientChannel() {
+		return new Promise((resolve) => {
+			this.clientChannel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.consume(
+						this.replyQueue,
+						(msg: Message) => {
+							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
+						},
+						{
+							noAck: true,
+						}
+					);
+					resolve();
+				},
+			});
+		});
 	}
 
 	private async listen(channel: Channel) {
@@ -190,7 +214,7 @@ export class RMQService {
 		responseEmitter.removeAllListeners();
 	}
 
-	private attachEmmitters(): void {
+	private attachEmitters(): void {
 		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
 			this.reply(result, msg);
 		});
@@ -204,7 +228,7 @@ export class RMQService {
 
 	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
 		res = await this.intercept(res, msg, error);
-		await this.channel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
+		await this.subscriptionChannel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
 			headers: {
 				...this.buildError(error),
