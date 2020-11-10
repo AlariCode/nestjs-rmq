@@ -8,7 +8,7 @@ import {
 	RMQ_ROUTES_META,
 } from '../constants';
 import { IRouteMeta } from '../interfaces/queue-meta.interface';
-import { requestEmitter, responseEmitter, ResponseEmmiterResult } from '../emmiters/router.emmiter';
+import { requestEmitter, responseEmitter, ResponseEmitterResult } from '../emmiters/router.emmiter';
 import { RMQService } from '../rmq.service';
 import { Message } from 'amqplib';
 import { RMQError } from '..';
@@ -26,7 +26,7 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 		if (routes.length === 0) {
 			Logger.error(`${ERROR_NO_ROUTE_FOR_CONTROLLER} ${target.prototype.constructor.name}`);
 		}
-		target = class extends (target as { new(...args): any }) {
+		target = class extends (target as { new (...args): any }) {
 			constructor(...args: any) {
 				super(...args);
 				routes.forEach(async (route) => {
@@ -44,21 +44,21 @@ export function RMQController(options?: IRMQControllerOptions): ClassDecorator {
 							}
 							const result = await this[route.methodName].apply(this, funcArgs);
 							if (msg.properties.replyTo && result) {
-								responseEmitter.emit(ResponseEmmiterResult.success, msg, result);
+								responseEmitter.emit(ResponseEmitterResult.success, msg, result);
 							} else if (msg.properties.replyTo && result === undefined) {
 								responseEmitter.emit(
-									ResponseEmmiterResult.error,
+									ResponseEmitterResult.error,
 									msg,
 									new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ)
 								);
 							}
 						} catch (err) {
 							if (msg.properties.replyTo) {
-								responseEmitter.emit(ResponseEmmiterResult.error, msg, err);
+								responseEmitter.emit(ResponseEmitterResult.error, msg, err);
 							}
 						}
 						if (!route.options?.manualAck) {
-							responseEmitter.emit(ResponseEmmiterResult.ack, msg);
+							responseEmitter.emit(ResponseEmitterResult.ack, msg);
 						}
 					});
 				});

@@ -21,7 +21,7 @@ import * as amqp from 'amqp-connection-manager';
 // tslint:disable-next-line:no-duplicate-imports
 import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { IRMQConnection, IRMQServiceOptions } from './interfaces/rmq-options.interface';
-import { requestEmitter, responseEmitter, ResponseEmmiterResult } from './emmiters/router.emmiter';
+import { requestEmitter, responseEmitter, ResponseEmitterResult } from './emmiters/router.emmiter';
 import 'reflect-metadata';
 import { IRouteMeta } from './interfaces/queue-meta.interface';
 import { IPublishOptions } from './interfaces/rmq-publish-options.interface';
@@ -215,13 +215,13 @@ export class RMQService {
 	}
 
 	private attachEmitters(): void {
-		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
+		responseEmitter.on(ResponseEmitterResult.success, async (msg, result) => {
 			this.reply(result, msg);
 		});
-		responseEmitter.on(ResponseEmmiterResult.error, async (msg, err) => {
+		responseEmitter.on(ResponseEmitterResult.error, async (msg, err) => {
 			this.reply('', msg, err);
 		});
-		responseEmitter.on(ResponseEmmiterResult.ack, async (msg) => {
+		responseEmitter.on(ResponseEmitterResult.ack, async (msg) => {
 			this.ack(msg);
 		});
 	}

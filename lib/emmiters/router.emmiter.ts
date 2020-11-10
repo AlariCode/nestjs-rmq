@@ -6,8 +6,8 @@ export const responseEmitter = new EventEmitter();
 requestEmitter.setMaxListeners(0);
 responseEmitter.setMaxListeners(0);
 
-export enum ResponseEmmiterResult {
+export enum ResponseEmitterResult {
 	success = 'success',
 	error = 'error',
-	ack = 'ack'
+	ack = 'ack',
 }
