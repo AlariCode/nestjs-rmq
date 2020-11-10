@@ -15,7 +15,7 @@ import { ERROR_TYPE } from '../../lib/constants';
 @Controller()
 @RMQController()
 export class MicroserviceController {
-	constructor(private readonly rmqService: RMQService) { }
+	constructor(private readonly rmqService: RMQService) {}
 
 	@RMQRoute(SumContracts.topic)
 	@Validate()

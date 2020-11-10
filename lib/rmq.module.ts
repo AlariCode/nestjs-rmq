@@ -27,13 +27,11 @@ export class RMQModule {
 			module: RMQModule,
 			imports: options.imports,
 			providers: [rmqServiceProvider],
-			exports:[rmqServiceProvider]
+			exports: [rmqServiceProvider],
 		};
 	}
 
-	private static createAsyncOptionsProvider<T>(
-		options: IRMQServiceAsyncOptions,
-	): Provider {
+	private static createAsyncOptionsProvider<T>(options: IRMQServiceAsyncOptions): Provider {
 		return {
 			provide: RMQService,
 			useFactory: async (...args: any[]) => {

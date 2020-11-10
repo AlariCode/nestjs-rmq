@@ -29,6 +29,7 @@ import { RMQError } from './classes/rmq-error.class';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { hostname } from 'os';
 import { RQMColorLogger } from './helpers/logger';
+import { validateOptions } from './option.validator';
 
 @Injectable()
 export class RMQService {
@@ -45,27 +46,11 @@ export class RMQService {
 	constructor(options: IRMQServiceOptions) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
-
-		this.validateOptions();
-	}
-
-	private validateOptions(): void {
-		this.options.connections.map((connection) => {
-			if (connection.host === undefined) {
-				this.logger.error(
-					'Check your configuration, RabbitMQ server address not specified! host is undefined.'
-				);
-			}
-		});
-		if (this.options.serviceName === undefined) {
-			this.logger.warn(
-				'Check your configuration, RabbitMQ service name not specified! serviceName is undefined.'
-			);
-		}
+		validateOptions(this.options, this.logger);
 	}
 
 	public async init(): Promise<void> {
-		return new Promise((resolve) => {
+		return new Promise(async (resolve) => {
 			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 				return `amqp://${connection.login}:${connection.password}@${connection.host}`;
 			});
@@ -74,67 +59,10 @@ export class RMQService {
 				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
 			};
 			this.server = amqp.connect(connectionURLs, connectionOptions);
-			this.clientChannel = this.server.createChannel({
-				json: false,
-				setup: async (channel: Channel) => {
-					await channel.assertExchange(
-						this.options.exchangeName,
-						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
-						{
-							...this.options.exchangeOptions,
-							durable: this.options.isExchangeDurable ?? true,
-						}
-					);
-					await channel.prefetch(
-						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
-						this.options.isGlobalPrefetchCount ?? false
-					);
-					await channel.consume(
-						this.replyQueue,
-						(msg: Message) => {
-							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
-						},
-						{
-							noAck: true,
-						}
-					);
-				},
-			});
-			this.subscriptionChannel = this.server.createChannel({
-				json: false,
-				setup: async (channel: Channel) => {
-					await channel.assertExchange(
-						this.options.exchangeName,
-						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
-						{
-							...this.options.exchangeOptions,
-							durable: this.options.isExchangeDurable ?? true,
-						}
-					);
-					await channel.prefetch(
-						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
-						this.options.isGlobalPrefetchCount ?? false
-					);
-					await channel.consume(
-						this.replyQueue,
-						(msg: Message) => {
-							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
-						},
-						{
-							noAck: true,
-						}
-					);
-					if (this.options.queueName) {
-						this.listen(channel);
-					}
-					this.logger.log(CONNECTED_MESSAGE);
-					resolve();
-				},
-			});
 
 			this.server.on(CONNECT_EVENT, (connection) => {
 				this.isConnected = true;
-				this.attachEmmitters();
+				this.attachEmitters();
 			});
 			this.server.on(DISCONNECT_EVENT, (err) => {
 				this.isConnected = false;
@@ -142,6 +70,9 @@ export class RMQService {
 				this.logger.error(DISCONNECT_MESSAGE);
 				this.logger.error(err.err);
 			});
+
+			await Promise.all([this.createClientChannel(), this.createSubscriptionChannel()]);
+			resolve();
 		});
 	}
 
@@ -205,6 +136,53 @@ export class RMQService {
 		await this.server.close();
 	}
 
+	private async createSubscriptionChannel() {
+		return new Promise((resolve) => {
+			this.subscriptionChannel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.assertExchange(
+						this.options.exchangeName,
+						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
+						{
+							...this.options.exchangeOptions,
+							durable: this.options.isExchangeDurable ?? true,
+						}
+					);
+					await channel.prefetch(
+						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
+						this.options.isGlobalPrefetchCount ?? false
+					);
+					if (this.options.queueName) {
+						this.listen(channel);
+					}
+					this.logger.log(CONNECTED_MESSAGE);
+					resolve();
+				},
+			});
+		});
+	}
+
+	private async createClientChannel() {
+		return new Promise((resolve) => {
+			this.clientChannel = this.server.createChannel({
+				json: false,
+				setup: async (channel: Channel) => {
+					await channel.consume(
+						this.replyQueue,
+						(msg: Message) => {
+							this.sendResponseEmitter.emit(msg.properties.correlationId, msg);
+						},
+						{
+							noAck: true,
+						}
+					);
+					resolve();
+				},
+			});
+		});
+	}
+
 	private async listen(channel: Channel) {
 		await channel.assertQueue(this.options.queueName, {
 			durable: this.options.isQueueDurable ?? true,
@@ -236,7 +214,7 @@ export class RMQService {
 		responseEmitter.removeAllListeners();
 	}
 
-	private attachEmmitters(): void {
+	private attachEmitters(): void {
 		responseEmitter.on(ResponseEmmiterResult.success, async (msg, result) => {
 			this.reply(result, msg);
 		});

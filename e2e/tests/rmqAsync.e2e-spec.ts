@@ -17,23 +17,23 @@ describe('RMQe2e', () => {
 			imports: [
 				ConfigModule,
 				RMQModule.forRootAsync({
-						imports: [ConfigModule],
-						inject: [ConfigService],
-						useFactory: (configService: ConfigService) => {
-							return {
-								exchangeName: 'test',
-								connections: [
-									{
-										login: 'guest',
-										password: 'guest',
-										host: configService.getHost(),
-									},
-								],
-								queueName: 'test',
-							}
-						}
-					}
-				),
+					imports: [ConfigModule],
+					inject: [ConfigService],
+					useFactory: (configService: ConfigService) => {
+						return {
+							exchangeName: 'test',
+							connections: [
+								{
+									login: 'guest',
+									password: 'guest',
+									host: configService.getHost(),
+								},
+							],
+							serviceName: 'test-service',
+							queueName: 'test',
+						};
+					},
+				}),
 			],
 			controllers: [ApiController, MicroserviceController],
 		}).compile();
