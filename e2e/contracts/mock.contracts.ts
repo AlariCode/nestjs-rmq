@@ -82,3 +82,14 @@ export namespace DebugContracts {
 		debugString: string;
 	}
 }
+
+export namespace CustomMessageFactoryContracts {
+	export const topic: string = 'custom-message-factory.rpc';
+	export class Request {
+		num: number;
+	}
+	export class Response {
+		num: number;
+		appId: string;
+	}
+}

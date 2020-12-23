@@ -23,7 +23,7 @@ describe('RMQe2e', () => {
 						{
 							login: 'guest',
 							password: 'guest',
-							host: 'localhost',
+							host: '192.168.1.35',
 						},
 					],
 					queueName: 'test',
@@ -75,7 +75,7 @@ describe('RMQe2e', () => {
 				expect(result).not.toBe(6);
 			} catch (error) {
 				expect(error.message).toBe(
-					'each value in arrayToSum must be a number conforming to the specified constraints'
+					'each value in arrayToSum must be a number conforming to the specified constraints',
 				);
 				expect(error.type).toBeUndefined();
 				expect(error.code).toBeUndefined();
@@ -170,6 +170,14 @@ describe('RMQe2e', () => {
 			} catch (error) {
 				expect(error.host).toBe('handler');
 			}
+		});
+	});
+
+	describe('msgFactory', () => {
+		it('customMessageFactory', async () => {
+			const { num, appId } = await apiController.customMessageFactory(1);
+			expect(num).toBe(2);
+			expect(appId).toBe('test-service');
 		});
 	});
 

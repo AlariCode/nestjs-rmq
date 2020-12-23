@@ -1,3 +1,5 @@
+import { Message } from 'amqplib';
+
 export interface IRouteMeta {
 	topic: string;
 	methodName: string;
@@ -6,5 +8,6 @@ export interface IRouteMeta {
 }
 
 export interface IRouteOptions {
-	manualAck: boolean;
+	manualAck?: boolean;
+	msgFactory?: (msg: Message) => any[];
 }

@@ -1,7 +1,7 @@
 import { Controller } from '@nestjs/common';
 import { RMQService } from '../../lib';
 import {
-	AppIdContracts,
+	AppIdContracts, CustomMessageFactoryContracts,
 	DebugContracts,
 	DivideContracts,
 	ManualAckContracts,
@@ -57,6 +57,14 @@ export class ApiController {
 	}
 
 	async debug(): Promise<DebugContracts.Response> {
-		return this.rmq.send<DebugContracts.Request, DebugContracts.Response>(DebugContracts.topic, { prop1: [1], prop2: Buffer.from('test buffer') });
+		return this.rmq.send<DebugContracts.Request, DebugContracts.Response>(
+			DebugContracts.topic, { prop1: [1], prop2: Buffer.from('test buffer') }
+			);
+	}
+
+	async customMessageFactory(num: number): Promise<CustomMessageFactoryContracts.Response> {
+		return this.rmq.send<CustomMessageFactoryContracts.Request, CustomMessageFactoryContracts.Response>(
+			CustomMessageFactoryContracts.topic, { num }
+			);
 	}
 }

@@ -1,5 +1,13 @@
 # Change log
 
+## 2.0.0
+-   Moved to NestJS DI system
+-   Removed @RMQController (deprecation warning)
+-   Initialization refactor.
+-   Added msgFactory to @RMQRoute
+-   Changed msgFactory interface.
+-   MsgFactory e2e test
+
 ## 1.16.0
 
 -   Added warning message if service name is not specified (thx @milovidov983)

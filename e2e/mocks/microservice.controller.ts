@@ -8,12 +8,12 @@ import {
 	TimeOutContracts,
 	AppIdContracts,
 	ManualAckContracts,
-	DebugContracts,
+	DebugContracts, CustomMessageFactoryContracts,
 } from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
+import { Message } from 'amqplib';
 
 @Controller()
-@RMQController()
 export class MicroserviceController {
 	constructor(private readonly rmqService: RMQService) {}
 
@@ -75,5 +75,18 @@ export class MicroserviceController {
 	@RMQRoute(DebugContracts.topic)
 	debugMessage(@RMQMessage msg: ExtendedMessage): DebugContracts.Response {
 		return { debugString: msg.getDebugString() };
+	}
+
+	@RMQRoute(CustomMessageFactoryContracts.topic, {
+		msgFactory: (msg: Message) => {
+			const content: CustomMessageFactoryContracts.Request = JSON.parse(msg.content.toString());
+			content.num = content.num * 2;
+			return [content, msg.properties.appId];
+		}
+	})
+	customMessageFactory(
+		{ num }: CustomMessageFactoryContracts.Request, appId: string
+	): CustomMessageFactoryContracts.Response {
+		return { num, appId };
 	}
 }

@@ -1,44 +1,42 @@
 import { RMQService } from './rmq.service';
 import { DynamicModule, Global, Module, Provider } from '@nestjs/common';
 import { IRMQServiceAsyncOptions, IRMQServiceOptions } from './interfaces/rmq-options.interface';
+import { RMQMetadataAccessor } from './rmq-metadata.accessor';
+import { RMQExplorer } from './rmq.explorer';
+import { DiscoveryModule } from '@nestjs/core';
+import { RMQ_MODULE_OPTIONS } from './constants';
+import { RmqErrorService } from './rmq-error.service';
 
 @Global()
-@Module({})
+@Module({
+	imports: [DiscoveryModule],
+	providers: [RMQMetadataAccessor, RMQExplorer, RmqErrorService]
+})
 export class RMQModule {
 	static forRoot(options: IRMQServiceOptions): DynamicModule {
-		const rmqServiceProvider = {
-			provide: RMQService,
-			useFactory: async (): Promise<RMQService> => {
-				const RMQInstance = new RMQService(options);
-				await RMQInstance.init();
-				return RMQInstance;
-			},
-		};
 		return {
 			module: RMQModule,
-			providers: [rmqServiceProvider],
-			exports: [rmqServiceProvider],
+			providers: [RMQService, { provide: RMQ_MODULE_OPTIONS, useValue: options }],
+			exports: [RMQService],
 		};
 	}
 
 	static forRootAsync(options: IRMQServiceAsyncOptions): DynamicModule {
-		const rmqServiceProvider = this.createAsyncOptionsProvider(options);
+		const asyncOptions = this.createAsyncOptionsProvider(options);
 		return {
 			module: RMQModule,
 			imports: options.imports,
-			providers: [rmqServiceProvider],
-			exports: [rmqServiceProvider],
+			providers: [RMQService, RMQMetadataAccessor, RMQExplorer, asyncOptions],
+			exports: [RMQService],
 		};
 	}
 
 	private static createAsyncOptionsProvider<T>(options: IRMQServiceAsyncOptions): Provider {
 		return {
-			provide: RMQService,
+			provide: RMQ_MODULE_OPTIONS,
 			useFactory: async (...args: any[]) => {
 				const config = await options.useFactory(...args);
-				const RMQInstance = new RMQService(config);
-				await RMQInstance.init();
-				return RMQInstance;
+				return config;
 			},
 			inject: options.inject || [],
 		};

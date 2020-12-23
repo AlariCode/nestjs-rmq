@@ -11,6 +11,23 @@
 
 This library will take care of RPC requests and messaging between microservices. It is easy to bind to our existing controllers to RMQ routes. This version is only for NestJS. If you want a framework agnostic library you can use [rabbitmq-messages](https://github.com/AlariCode/rabbitmq-messages)
 
+## Version 2 is out!
+
+New version of nestjs-rmq contains minor breaking changes, but is simple to migrate to.
+- `@RMQController` decorator is deprecated. 
+You will get warning if you continue to use it, and it will be deleted in future versions. 
+You can safely remove it from a controller or service. `msgFactory` inside options will not be functional anymore. You have to move it to `@RMQRoute`
+- `msgFactory` changed its interface from
+```typescript
+msgFactory?: (msg: Message, topic: IRouteMeta) => any[];
+```
+to 
+```typescript
+msgFactory?: (msg: Message) => any[];
+```
+because all `IRouteMeta` already contained in `Message`.
+- `msgFactory` can be passed to `@RMQRoute` instead of `@RMQController`
+
 ## Start
 
 First, install the package:
@@ -223,10 +240,9 @@ This method returns a Promise.
 
 ## Recieving messages
 
-To listen for messages bind your controller methods to subscription topics with **RMQRoute()** decorator and you controller to **@RMQController()**:
+To listen for messages bind your controller or service methods to subscription topics with **RMQRoute()** decorator:
 
 ```typescript
-@RMQController()
 export class AppController {
 	//...
 
@@ -382,36 +398,31 @@ You will get info about message, field and properties:
 
 ## Customizing massage with msgFactory
 
-`@RMQRoute` handlers accepts a single parameter `msg` which is a ampq `message.content` parsed as a JSON. You may want to add additional custom layer to that message and change the way handler is called. For example you may want to structure your message with two different parts: payload (containing actual data) and context (containing request metadata) and process them explicitly in your handler. You can also decorate params passed to the handler. This is the same thing Nest does with `Request` object and decorators like `Param` or `Body`.
+`@RMQRoute` handlers accepts a single parameter `msg` which is a ampq `message.content` parsed as a JSON. You may want to add additional custom layer to that message and change the way handler is called. For example, you may want to structure your message with two different parts: payload (containing actual data) and appId (containing request applicationId) and process them explicitly in your handler.
 
-To do that, you may pass a param to the `RMQController` a custom message factory `msgFactory?: (msg: Message, topic: IQueueMeta) => any[];`.
+To do that, you may pass a param to the `RMQRoute` a custom message factory `msgFactory?: (msg: Message) => any;`.
 
 The default msgFactory:
 
 ```typescript
-@RMQController({
-  msgFactory: (msg: Message, topic: IQueueMeta) => [JSON.parse(msg.content.toString())]
+@RMQRoute('topic', {
+	msgFactory: (msg: Message) => JSON.parse(msg.content.toString())
 })
 ```
 
-Custom msgFactory using @Payload and @Context decorators:
+Custom msgFactory that returns additional argument (sender appId) and change request:
 
 ```typescript
-@RMQController({
-  msgFactory: (msg: Message, topic: IQueueMeta) => {
-    const parsed = JSON.parse(msg.content.toString());
-    const contextIndex = topic.target[METADATA_KEYS.CONTEXT + topic.methodName]?.[0];
-    const payloadIndex = topic.target[METADATA_KEYS.PAYLOAD + topic.methodName]?.[0];
-    const response = [];
-    if (payloadIndex !== undefined) {
-      response[payloadIndex] = parsed.payload;
-    }
-    if (contextIndex !== undefined) {
-      response[contextIndex] = parsed.context;
-    }
-    return response;
-  };
+@RMQRoute(CustomMessageFactoryContracts.topic, {
+	msgFactory: (msg: Message) => {
+		const content: CustomMessageFactoryContracts.Request = JSON.parse(msg.content.toString());
+		content.num = content.num * 2;
+		return [content, msg.properties.appId];
+	}
 })
+customMessageFactory({ num }: CustomMessageFactoryContracts.Request, appId: string): CustomMessageFactoryContracts.Response {
+	return { num, appId };
+}
 ```
 
 ## Validating data

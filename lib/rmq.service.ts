@@ -1,4 +1,4 @@
-import { Injectable, LoggerService } from '@nestjs/common';
+import { Inject, Injectable, LoggerService, OnModuleInit } from '@nestjs/common';
 import {
 	CONNECT_EVENT,
 	CONNECTED_MESSAGE,
@@ -12,8 +12,8 @@ import {
 	ERROR_TIMEOUT,
 	ERROR_TYPE,
 	REPLY_QUEUE,
-	RMQ_ROUTES_META,
 	DEFAULT_HEARTBEAT_TIME,
+	RMQ_MODULE_OPTIONS
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -22,31 +22,38 @@ import * as amqp from 'amqp-connection-manager';
 import { AmqpConnectionManager, ChannelWrapper } from 'amqp-connection-manager';
 import { IRMQConnection, IRMQServiceOptions } from './interfaces/rmq-options.interface';
 import { requestEmitter, responseEmitter, ResponseEmitterResult } from './emmiters/router.emmiter';
-import 'reflect-metadata';
-import { IRouteMeta } from './interfaces/queue-meta.interface';
 import { IPublishOptions } from './interfaces/rmq-publish-options.interface';
 import { RMQError } from './classes/rmq-error.class';
-import { RMQErrorHandler } from './classes/rmq-error-handler.class';
-import { hostname } from 'os';
 import { RQMColorLogger } from './helpers/logger';
 import { validateOptions } from './option.validator';
+import { RMQMetadataAccessor } from './rmq-metadata.accessor';
+import { RmqErrorService } from './rmq-error.service';
+import { getUniqId } from './utils/get-uniq-id';
 
 @Injectable()
-export class RMQService {
+export class RMQService implements OnModuleInit {
 	private server: AmqpConnectionManager = null;
 	private clientChannel: ChannelWrapper = null;
 	private subscriptionChannel: ChannelWrapper = null;
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
-	private routeMeta: IRouteMeta[];
+	private routes: string[];
 	private logger: LoggerService;
 	private isConnected: boolean = false;
 
-	constructor(options: IRMQServiceOptions) {
+	constructor(
+		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
+		private readonly metadataAccessor: RMQMetadataAccessor,
+		private readonly errorService: RmqErrorService
+	) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
 		validateOptions(this.options, this.logger);
+	}
+
+	async onModuleInit() {
+		await this.init();
 	}
 
 	public async init(): Promise<void> {
@@ -86,7 +93,7 @@ export class RMQService {
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
-			const correlationId = this.getUniqId();
+			const correlationId = getUniqId();
 			const timeout = options?.timeout ?? this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
 				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
@@ -94,7 +101,7 @@ export class RMQService {
 			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
 				if (msg.properties.headers['-x-error']) {
-					reject(this.errorHandler(msg));
+					reject(this.errorService.errorHandler(msg));
 				}
 				const { content } = msg;
 				if (content.toString()) {
@@ -188,11 +195,11 @@ export class RMQService {
 			durable: this.options.isQueueDurable ?? true,
 			arguments: this.options.queueArguments ?? {},
 		});
-		this.routeMeta = Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
-		this.routeMeta = this.routeMeta ?? [];
-		if (this.routeMeta.length > 0) {
-			this.routeMeta.map(async (meta) => {
-				await channel.bindQueue(this.options.queueName, this.options.exchangeName, meta.topic);
+		this.routes = this.metadataAccessor.getAllRMQPaths();
+		this.routes = this.routes ?? [];
+		if (this.routes.length > 0) {
+			this.routes.map(async (r) => {
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, r);
 			});
 		}
 		await channel.consume(
@@ -231,23 +238,14 @@ export class RMQService {
 		await this.subscriptionChannel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
 			headers: {
-				...this.buildError(error),
+				...this.errorService.buildError(error),
 			},
 		});
 		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
-	private getUniqId(): string {
-		function s4() {
-			return Math.floor((1 + Math.random()) * 0x10000)
-				.toString(16)
-				.substring(1);
-		}
-		return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-	}
-
 	private isTopicExists(topic: string): boolean {
-		return !!this.routeMeta.find((x) => x.topic === topic);
+		return !!this.routes.find((x) => x === topic);
 	}
 
 	private async useMiddleware(msg: Message) {
@@ -268,36 +266,5 @@ export class RMQService {
 			res = await new intercepter(this.logger).intercept(res, msg, error);
 		}
 		return res;
-	}
-
-	private isRMQError(error: Error | RMQError): error is RMQError {
-		return (error as RMQError).code !== undefined;
-	}
-
-	private buildError(error: Error | RMQError) {
-		if (!error) {
-			return null;
-		}
-		let errorHeaders = {};
-		errorHeaders['-x-error'] = error.message;
-		errorHeaders['-x-host'] = hostname();
-		errorHeaders['-x-service'] = this.options.serviceName;
-		if (this.isRMQError(error)) {
-			errorHeaders = {
-				...errorHeaders,
-				'-x-status-code': (error as RMQError).code,
-				'-x-data': (error as RMQError).data,
-				'-x-type': (error as RMQError).type,
-			};
-		}
-		return errorHeaders;
-	}
-
-	private errorHandler(msg: Message): any {
-		const { headers } = msg.properties;
-		if (this.options.errorHandler) {
-			return this.options.errorHandler.handle(headers);
-		}
-		return RMQErrorHandler.handle(headers);
 	}
 }
