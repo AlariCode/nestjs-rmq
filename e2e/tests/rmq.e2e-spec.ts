@@ -71,8 +71,8 @@ describe('RMQe2e', () => {
 		});
 		it('request validation failed', async () => {
 			try {
-				const { result } = await apiController.sumFailed(['1', '2', '3']);
-				expect(result).not.toBe(6);
+				await apiController.sumFailed(['a', 'b', 'c']);
+				expect(true).toBe(false);
 			} catch (error) {
 				expect(error.message).toBe(
 					'each value in arrayToSum must be a number conforming to the specified constraints',

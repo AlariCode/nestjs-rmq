@@ -1,5 +1,5 @@
 import { Controller } from '@nestjs/common';
-import { RMQMessage, RMQController, RMQError, RMQRoute, Validate, ExtendedMessage, RMQService } from '../../lib';
+import { RMQMessage, RMQError, RMQRoute, Validate, ExtendedMessage, RMQService } from '../../lib';
 import {
 	DivideContracts,
 	MultiplyContracts,

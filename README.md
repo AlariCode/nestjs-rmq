@@ -432,14 +432,13 @@ NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) 
 ```typescript
 import { RMQController, RMQRoute, Validate } from 'nestjs-rmq';
 
-@Validate()
 @RMQRoute('my.rpc')
+@Validate()
 myMethod(data: myClass): number {
 	// ...
 }
 ```
-
-Where `myClass` is data class with validation decorators:
+Add it after `@RMQRoute()`. Where `myClass` is data class with validation decorators:
 
 ```typescript
 import { IsString, MinLength, IsNumber } from 'class-validator';

@@ -4,7 +4,6 @@ import {
 import { IRouteOptions } from '../interfaces/queue-meta.interface';
 import { applyDecorators, SetMetadata } from '@nestjs/common';
 
-
 export const RMQRoute = (topic: string, options?: IRouteOptions): MethodDecorator => {
 		return applyDecorators(
 			SetMetadata(RMQ_ROUTES_OPTIONS, {

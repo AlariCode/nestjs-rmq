@@ -4,7 +4,7 @@ import {
 	RMQ_ROUTES_PATH,
 	RMQ_ROUTES_OPTIONS,
 	RMQ_ROUTES_META,
-	RMQ_MESSAGE_META
+	RMQ_MESSAGE_META, RMQ_ROUTES_VALIDATE,
 } from './constants';
 import { IRouteOptions } from './interfaces/queue-meta.interface';
 import { RMQService } from './rmq.service';
@@ -29,6 +29,10 @@ export class RMQMetadataAccessor {
 
 	getRMQOptions(target: Function): IRouteOptions | undefined {
 		return this.reflector.get(RMQ_ROUTES_OPTIONS, target);
+	}
+
+	getRMQValidation(target: Function): boolean | undefined {
+		return this.reflector.get(RMQ_ROUTES_VALIDATE, target);
 	}
 
 	getRMQMessageIndexes(target: any, method: string): number[] {

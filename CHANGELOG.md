@@ -1,5 +1,8 @@
 # Change log
 
+## 2.0.1
+-   Fix validate decoration order
+
 ## 2.0.0
 -   Moved to NestJS DI system
 -   Removed @RMQController (deprecation warning)

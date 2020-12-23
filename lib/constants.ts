@@ -2,7 +2,7 @@ export const RMQ_ROUTES_META: string = 'RMQ_ROUTES_META';
 export const RMQ_MESSAGE_META: string = 'RMQ_MESSAGE_META';
 export const RMQ_ROUTES_OPTIONS: string = 'RMQ_ROUTES_OPTIONS';
 export const RMQ_ROUTES_PATH: string = 'RMQ_ROUTES_PATH';
-export const RMQ_MESSAGE_INDEX: string = 'RMQ_MESSAGE_INDEX';
+export const RMQ_ROUTES_VALIDATE: string = 'RMQ_ROUTES_VALIDATE';
 export const RMQ_MODULE_OPTIONS: string = 'RMQ_MODULE_OPTIONS';
 
 export const DISCONNECT_EVENT: string = 'disconnect';

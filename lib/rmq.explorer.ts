@@ -9,6 +9,7 @@ import { ERROR_TYPE, ERROR_UNDEFINED_FROM_RPC } from './constants';
 import { ExtendedMessage } from './classes/rmq-extended-message.class';
 import { RMQError } from './classes/rmq-error.class';
 import { IRouteOptions } from './interfaces/queue-meta.interface';
+import { validate, isObject } from 'class-validator';
 
 @Injectable()
 export class RMQExplorer implements OnModuleInit {
@@ -16,8 +17,9 @@ export class RMQExplorer implements OnModuleInit {
 	constructor(
 		private readonly discoveryService: DiscoveryService,
 		private readonly metadataAccessor: RMQMetadataAccessor,
-		private readonly metadataScanner: MetadataScanner
-	) {}
+		private readonly metadataScanner: MetadataScanner,
+	) {
+	}
 
 	async onModuleInit() {
 		this.explore();
@@ -65,8 +67,15 @@ export class RMQExplorer implements OnModuleInit {
 						funcArgs[param] = new ExtendedMessage(msg);
 					}
 				}
+				const error = await this.validateRequest(instance, methodRef, funcArgs);
+				if (error) {
+					responseEmitter.emit(
+						ResponseEmitterResult.error,
+						msg,
+						new RMQError(error, ERROR_TYPE.RMQ),
+					);
+				}
 				const result = await methodRef.apply(instance, funcArgs);
-
 				if (msg.properties.replyTo && result) {
 					responseEmitter.emit(ResponseEmitterResult.success, msg, result);
 				} else if (msg.properties.replyTo && result === undefined) {
@@ -85,6 +94,25 @@ export class RMQExplorer implements OnModuleInit {
 				responseEmitter.emit(ResponseEmitterResult.ack, msg);
 			}
 		});
+	}
+
+	private async validateRequest(instance: Record<string, Function>, methodRef: Function, funcArgs: any[]): Promise<string | undefined> {
+		const validateMsg = this.metadataAccessor.getRMQValidation(methodRef);
+		if (!validateMsg) {
+			return;
+		}
+		const types = Reflect.getMetadata('design:paramtypes', Object.getPrototypeOf(instance), methodRef.name);
+		const classData = funcArgs[0];
+		const test = Object.assign(new types[0](), classData);
+		const errors = await validate(test);
+		if (errors.length) {
+			const message = errors
+				.map((m) => {
+					return Object.values(m.constraints).join('; ');
+				})
+				.join('; ');
+			return message;
+		}
 	}
 }
 
