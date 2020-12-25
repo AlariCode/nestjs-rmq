@@ -96,7 +96,9 @@ export class RMQExplorer implements OnModuleInit {
 		});
 	}
 
-	private async validateRequest(instance: Record<string, Function>, methodRef: Function, funcArgs: any[]): Promise<string | undefined> {
+	private async validateRequest(
+		instance: Record<string, Function>, methodRef: Function, funcArgs: any[]
+		): Promise<string | undefined> {
 		const validateMsg = this.metadataAccessor.getRMQValidation(methodRef);
 		if (!validateMsg) {
 			return;

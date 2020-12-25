@@ -100,7 +100,7 @@ export class RMQService implements OnModuleInit {
 			const correlationId = getUniqId();
 			const timeout = options?.timeout ?? this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
-				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout}`, ERROR_TYPE.TRANSPORT));
+				reject(new RMQError(`${ERROR_TIMEOUT}: ${timeout} while sending to ${topic}`, ERROR_TYPE.TRANSPORT));
 			}, timeout);
 			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
@@ -149,7 +149,7 @@ export class RMQService implements OnModuleInit {
 	}
 
 	private async createSubscriptionChannel() {
-		return new Promise((resolve) => {
+		return new Promise<void>((resolve) => {
 			this.subscriptionChannel = this.server.createChannel({
 				json: false,
 				setup: async (channel: Channel) => {
@@ -168,7 +168,7 @@ export class RMQService implements OnModuleInit {
 					if (this.options.queueName) {
 						this.listen(channel);
 					}
-					this.logger.log(CONNECTED_MESSAGE);
+					this.logger.log(CONNECTED_MESSAGE, 'RMQModule');
 					resolve();
 				},
 			});
@@ -176,7 +176,7 @@ export class RMQService implements OnModuleInit {
 	}
 
 	private async createClientChannel() {
-		return new Promise((resolve) => {
+		return new Promise<void>((resolve) => {
 			this.clientChannel = this.server.createChannel({
 				json: false,
 				setup: async (channel: Channel) => {
@@ -207,6 +207,7 @@ export class RMQService implements OnModuleInit {
 				await channel.bindQueue(this.options.queueName, this.options.exchangeName, r);
 			});
 		}
+		this.logRMQRoutes();
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
@@ -277,11 +278,17 @@ export class RMQService implements OnModuleInit {
 		if (this.isInitialized) {
 			return;
 		}
-		await new Promise(resolve => {
+		await new Promise<void>(resolve => {
 			setTimeout(() => {
 				resolve();
 			}, INITIALIZATION_STEP_DELAY);
 		});
 		await this.initializationCheck();
+	}
+
+	private logRMQRoutes() {
+		for (const route of this.routes) {
+			this.logger.log(`Mapped ${route}`, 'RMQRoute');
+		}
 	}
 }

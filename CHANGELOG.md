@@ -1,5 +1,9 @@
 # Change log
 
+## 2.0.3
+-   Added RMQRoute mapping log on start
+-   Added topic name in timeout error
+
 ## 2.0.2
 -   Fix race condition on send() after start
 
