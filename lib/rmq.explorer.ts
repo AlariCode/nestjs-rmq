@@ -9,7 +9,7 @@ import { ERROR_TYPE, ERROR_UNDEFINED_FROM_RPC } from './constants';
 import { ExtendedMessage } from './classes/rmq-extended-message.class';
 import { RMQError } from './classes/rmq-error.class';
 import { IRouteOptions } from './interfaces/queue-meta.interface';
-import { validate, isObject } from 'class-validator';
+import { validate } from 'class-validator';
 
 @Injectable()
 export class RMQExplorer implements OnModuleInit {

@@ -1,5 +1,8 @@
 # Change log
 
+## 2.0.2
+-   Fix race condition on send() after start
+
 ## 2.0.1
 -   Fix validate decoration order
 

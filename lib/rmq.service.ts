@@ -13,7 +13,7 @@ import {
 	ERROR_TYPE,
 	REPLY_QUEUE,
 	DEFAULT_HEARTBEAT_TIME,
-	RMQ_MODULE_OPTIONS
+	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -40,7 +40,9 @@ export class RMQService implements OnModuleInit {
 	private replyQueue: string = REPLY_QUEUE;
 	private routes: string[];
 	private logger: LoggerService;
+
 	private isConnected: boolean = false;
+	private isInitialized: boolean = false;
 
 	constructor(
 		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
@@ -54,6 +56,7 @@ export class RMQService implements OnModuleInit {
 
 	async onModuleInit() {
 		await this.init();
+		this.isInitialized = true;
 	}
 
 	public async init(): Promise<void> {
@@ -93,6 +96,7 @@ export class RMQService implements OnModuleInit {
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
 		return new Promise<IReply>(async (resolve, reject) => {
+			await this.initializationCheck();
 			const correlationId = getUniqId();
 			const timeout = options?.timeout ?? this.options.messagesTimeout ?? DEFAULT_TIMEOUT;
 			const timerId = setTimeout(() => {
@@ -123,6 +127,7 @@ export class RMQService implements OnModuleInit {
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
+		await this.initializationCheck();
 		await this.clientChannel.publish(this.options.exchangeName, topic, Buffer.from(JSON.stringify(message)), {
 			appId: this.options.serviceName,
 			timestamp: new Date().getTime(),
@@ -266,5 +271,17 @@ export class RMQService implements OnModuleInit {
 			res = await new intercepter(this.logger).intercept(res, msg, error);
 		}
 		return res;
+	}
+
+	private async initializationCheck() {
+		if (this.isInitialized) {
+			return;
+		}
+		await new Promise(resolve => {
+			setTimeout(() => {
+				resolve();
+			}, INITIALIZATION_STEP_DELAY);
+		});
+		await this.initializationCheck();
 	}
 }
