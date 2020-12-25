@@ -74,6 +74,7 @@ export class RMQExplorer implements OnModuleInit {
 						msg,
 						new RMQError(error, ERROR_TYPE.RMQ),
 					);
+					return;
 				}
 				const result = await methodRef.apply(instance, funcArgs);
 				if (msg.properties.replyTo && result) {

@@ -1,5 +1,8 @@
 # Change log
 
+## 2.0.4
+-   Fix validation stom request
+
 ## 2.0.3
 -   Added RMQRoute mapping log on start
 -   Added topic name in timeout error
