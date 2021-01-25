@@ -1,7 +1,11 @@
 # Change log
 
+## 2.0.5
+-   Fixed ack on validation error
+-   Added warning message on RMQRoute without queue
+
 ## 2.0.4
--   Fix validation stom request
+-   Fixed validation stom request
 
 ## 2.0.3
 -   Added RMQRoute mapping log on start

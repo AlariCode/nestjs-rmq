@@ -13,7 +13,7 @@ import {
 	ERROR_TYPE,
 	REPLY_QUEUE,
 	DEFAULT_HEARTBEAT_TIME,
-	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY,
+	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -168,7 +168,7 @@ export class RMQService implements OnModuleInit {
 					if (this.options.queueName) {
 						this.listen(channel);
 					}
-					this.logger.log(CONNECTED_MESSAGE, 'RMQModule');
+					this.logConnected();
 					resolve();
 				},
 			});
@@ -200,14 +200,7 @@ export class RMQService implements OnModuleInit {
 			durable: this.options.isQueueDurable ?? true,
 			arguments: this.options.queueArguments ?? {},
 		});
-		this.routes = this.metadataAccessor.getAllRMQPaths();
-		this.routes = this.routes ?? [];
-		if (this.routes.length > 0) {
-			this.routes.map(async (r) => {
-				await channel.bindQueue(this.options.queueName, this.options.exchangeName, r);
-			});
-		}
-		this.logRMQRoutes();
+		await this.bindRMQRoutes(channel);
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
@@ -221,6 +214,16 @@ export class RMQService implements OnModuleInit {
 			},
 			{ noAck: false }
 		);
+	}
+
+	private async bindRMQRoutes(channel: Channel): Promise<void> {
+		this.routes = this.metadataAccessor.getAllRMQPaths();
+		if (this.routes.length > 0) {
+			this.routes.map(async (r) => {
+				this.logger.log(`Mapped ${r}`, 'RMQRoute');
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, r);
+			});
+		}
 	}
 
 	private detachEmitters(): void {
@@ -286,9 +289,10 @@ export class RMQService implements OnModuleInit {
 		await this.initializationCheck();
 	}
 
-	private logRMQRoutes() {
-		for (const route of this.routes) {
-			this.logger.log(`Mapped ${route}`, 'RMQRoute');
+	private logConnected() {
+		this.logger.log(CONNECTED_MESSAGE, 'RMQModule');
+		if (!this.options.queueName && this.metadataAccessor.getAllRMQPaths().length > 0) {
+			this.logger.warn(ERROR_NO_QUEUE, 'RMQModule');
 		}
 	}
 }

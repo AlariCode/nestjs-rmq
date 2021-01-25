@@ -1,6 +1,6 @@
 {
 	"name": "nestjs-rmq",
-	"version": "2.0.4",
+	"version": "2.0.5",
 	"description": "NestJS RabbitMQ Module",
 	"main": "./dist/index.js",
 	"types": "./dist/index.d.ts",

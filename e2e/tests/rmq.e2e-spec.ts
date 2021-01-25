@@ -188,7 +188,7 @@ describe('RMQe2e', () => {
 	});
 });
 
-async function delay(time: number) {
+async function delay(time: number): Promise<void> {
 	return new Promise((resolve) => {
 		setTimeout(() => {
 			resolve();

@@ -12,6 +12,7 @@ export const CONNECTED_MESSAGE: string = 'Successfully connected to RMQ';
 export const REPLY_QUEUE: string = 'amq.rabbitmq.reply-to';
 export const ERROR_NONE_RPC: string = 'This is none RPC queue. Use notify() method instead';
 export const ERROR_NO_ROUTE: string = 'Requested service doesn\'t have RMQRoute with this path';
+export const ERROR_NO_QUEUE: string = 'No queueName specified! You will not recieve messages in RMQRoute';
 export const ERROR_UNDEFINED_FROM_RPC: string = 'RPC method returned undefined';
 export const ERROR_TIMEOUT: string = 'Response timeout error';
 

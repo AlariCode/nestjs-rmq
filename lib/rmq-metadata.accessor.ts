@@ -18,11 +18,11 @@ export class RMQMetadataAccessor {
 	}
 
 	getAllRMQPaths(): string[] {
-		return Reflect.getMetadata(RMQ_ROUTES_META, RMQService);
+		return Reflect.getMetadata(RMQ_ROUTES_META, RMQService) ?? [];
 	}
 
 	addRMQPath(path: string): void {
-		const paths: string[] = Reflect.getMetadata(RMQ_ROUTES_META, RMQService) ?? [];
+		const paths: string[] = this.getAllRMQPaths();
 		paths.push(path);
 		Reflect.defineMetadata(RMQ_ROUTES_META, paths, RMQService);
 	}
