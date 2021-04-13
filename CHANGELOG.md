@@ -1,23 +1,33 @@
 # Change log
 
+## 2.0.6
+
+-   Update dependencies
+
 ## 2.0.5
+
 -   Fixed ack on validation error
 -   Added warning message on RMQRoute without queue
 
 ## 2.0.4
+
 -   Fixed validation stom request
 
 ## 2.0.3
+
 -   Added RMQRoute mapping log on start
 -   Added topic name in timeout error
 
 ## 2.0.2
+
 -   Fix race condition on send() after start
 
 ## 2.0.1
+
 -   Fix validate decoration order
 
 ## 2.0.0
+
 -   Moved to NestJS DI system
 -   Removed @RMQController (deprecation warning)
 -   Initialization refactor.
