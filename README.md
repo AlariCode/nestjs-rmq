@@ -14,19 +14,25 @@ This library will take care of RPC requests and messaging between microservices.
 ## Version 2 is out!
 
 New version of nestjs-rmq contains minor breaking changes, but is simple to migrate to.
-- `@RMQController` decorator is deprecated. 
-You will get warning if you continue to use it, and it will be deleted in future versions. 
-You can safely remove it from a controller or service. `msgFactory` inside options will not be functional anymore. You have to move it to `@RMQRoute`
-- `msgFactory` changed its interface from
+
+-   `@RMQController` decorator is deprecated.
+    You will get warning if you continue to use it, and it will be deleted in future versions.
+    You can safely remove it from a controller or service. `msgFactory` inside options will not be functional anymore. You have to move it to `@RMQRoute`
+-   `msgFactory` changed its interface from
+
 ```typescript
 msgFactory?: (msg: Message, topic: IRouteMeta) => any[];
 ```
-to 
+
+to
+
 ```typescript
 msgFactory?: (msg: Message) => any[];
 ```
+
 because all `IRouteMeta` already contained in `Message`.
-- `msgFactory` can be passed to `@RMQRoute` instead of `@RMQController`
+
+-   `msgFactory` can be passed to `@RMQRoute` instead of `@RMQController`
 
 ## Start
 
@@ -39,7 +45,7 @@ npm i nestjs-rmq
 Setup your connection in root module:
 
 ```typescript
-import { RMQModule } from 'nestjs-tests';
+import { RMQModule } from 'nestjs-rmq';
 
 @Module({
 	imports: [
@@ -122,7 +128,7 @@ export class MyIntercepter extends RMQIntercepterClass {
 Config example with middleware and intercepters:
 
 ```typescript
-import { RMQModule } from 'nestjs-tests';
+import { RMQModule } from 'nestjs-rmq';
 
 @Module({
 	imports: [
@@ -148,7 +154,7 @@ export class AppModule {}
 If you want to inject dependency into RMQ initialization like Configuration service, use `forRootAsync`:
 
 ```typescript
-import { RMQModule } from 'nestjs-tests';
+import { RMQModule } from 'nestjs-rmq';
 import { ConfigModule } from './config/config.module';
 import { ConfigService } from './config/config.service';
 
@@ -438,6 +444,7 @@ myMethod(data: myClass): number {
 	// ...
 }
 ```
+
 Add it after `@RMQRoute()`. Where `myClass` is data class with validation decorators:
 
 ```typescript
@@ -460,7 +467,7 @@ If your input data will be invalid, the library will send back an error without 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
 ```typescript
-import { RMQController, RMQRoute, RMQPipe } from 'nestjs-tests';
+import { RMQController, RMQRoute, RMQPipe } from 'nestjs-rmq';
 
 @RMQPipe(MyPipeClass)
 @RMQRoute('my.rpc')
