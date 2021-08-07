@@ -33,6 +33,8 @@ export interface IRMQConnection {
 	login: string;
 	password: string;
 	host: string;
+	port?: number;
+	vhost?: string;
 }
 
 export interface IRMQServiceAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
