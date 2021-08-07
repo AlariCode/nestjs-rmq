@@ -62,7 +62,7 @@ export class RMQService implements OnModuleInit {
 	public async init(): Promise<void> {
 		return new Promise(async (resolve) => {
 			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
-				return `amqp://${connection.login}:${connection.password}@${connection.host}`;
+				return this.createConnectionUri(connection);
 			});
 			const connectionOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
@@ -146,6 +146,17 @@ export class RMQService implements OnModuleInit {
 		await this.clientChannel.close();
 		await this.subscriptionChannel.close();
 		await this.server.close();
+	}
+
+	private createConnectionUri(connection: IRMQConnection): string {
+		let uri = `amqp://${connection.login}:${connection.password}@${connection.host}`;
+		if (connection.port) {
+			uri += `:${connection.port}`;
+		}
+		if (connection.vhost) {
+			uri += `/${encodeURIComponent(connection.vhost)}`;
+		}
+		return uri;
 	}
 
 	private async createSubscriptionChannel() {
