@@ -154,7 +154,7 @@ export class RMQService implements OnModuleInit {
 			uri += `:${connection.port}`;
 		}
 		if (connection.vhost) {
-			uri += `/${encodeURIComponent(connection.vhost)}`;
+			uri += `/${connection.vhost}`;
 		}
 		return uri;
 	}
