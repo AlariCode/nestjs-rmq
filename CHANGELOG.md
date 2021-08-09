@@ -1,5 +1,12 @@
 # Change log
 
+## 2.1.0
+
+-   Migration to NestJS 8
+-   Added port and vhost options (thx @Kevalin)
+-   Update dependencies
+
+
 ## 2.0.6
 
 -   Update dependencies

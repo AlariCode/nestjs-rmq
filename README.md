@@ -11,9 +11,10 @@
 
 This library will take care of RPC requests and messaging between microservices. It is easy to bind to our existing controllers to RMQ routes. This version is only for NestJS. If you want a framework agnostic library you can use [rabbitmq-messages](https://github.com/AlariCode/rabbitmq-messages)
 
-## Version 2 is out!
+## Updated for NextJS 8!
+### Version 2 is out!
 
-New version of nestjs-rmq contains minor breaking changes, but is simple to migrate to.
+New version of nestjs-rmq contains minor breaking changes, and is simple to migrate to.
 
 -   `@RMQController` decorator is deprecated.
     You will get warning if you continue to use it, and it will be deleted in future versions.
