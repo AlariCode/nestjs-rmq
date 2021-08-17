@@ -104,7 +104,7 @@ export class RMQService implements OnModuleInit {
 			}, timeout);
 			this.sendResponseEmitter.once(correlationId, (msg: Message) => {
 				clearTimeout(timerId);
-				if (msg.properties.headers['-x-error']) {
+				if (msg.properties?.headers?.['-x-error']) {
 					reject(this.errorService.errorHandler(msg));
 				}
 				const { content } = msg;
