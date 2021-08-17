@@ -1,5 +1,9 @@
 # Change log
 
+## 2.1.1
+
+-   Compatible with other amqp libraries (thx @Kevalin)
+
 ## 2.1.0
 
 -   Migration to NestJS 8
