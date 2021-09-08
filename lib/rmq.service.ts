@@ -216,9 +216,10 @@ export class RMQService implements OnModuleInit {
 			this.options.queueName,
 			async (msg: Message) => {
 				this.logger.debug(`Received ▼ [${msg.fields.routingKey}] ${msg.content}`);
-				if (this.isTopicExists(msg.fields.routingKey)) {
+				const route = this.getRouteByTopic(msg.fields.routingKey);
+				if (route) {
 					msg = await this.useMiddleware(msg);
-					requestEmitter.emit(msg.fields.routingKey, msg);
+					requestEmitter.emit(route, msg);
 				} else {
 					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
 				}
@@ -264,8 +265,14 @@ export class RMQService implements OnModuleInit {
 		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
-	private isTopicExists(topic: string): boolean {
-		return !!this.routes.find((x) => x === topic);
+	private getRouteByTopic(topic: string): string {
+		return this.routes.find((route) => {
+			if (route === topic) {
+				return true;
+			}
+			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\.?)+') + '$';
+			return topic.search(regexString) !== -1;
+		});
 	}
 
 	private async useMiddleware(msg: Message) {

@@ -93,3 +93,23 @@ export namespace CustomMessageFactoryContracts {
 		appId: string;
 	}
 }
+
+export namespace PatternStarContracts {
+	export const topic: string = '*.*.star';
+	export class Request {
+		num: number;
+	}
+	export class Response {
+		num: number;
+	}
+}
+
+export namespace PatternHashContracts {
+	export const topic: string = '#.hash';
+	export class Request {
+		num: number;
+	}
+	export class Response {
+		num: number;
+	}
+}

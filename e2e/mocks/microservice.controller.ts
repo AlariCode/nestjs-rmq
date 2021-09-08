@@ -8,14 +8,14 @@ import {
 	TimeOutContracts,
 	AppIdContracts,
 	ManualAckContracts,
-	DebugContracts, CustomMessageFactoryContracts,
+	DebugContracts, CustomMessageFactoryContracts, PatternStarContracts, PatternHashContracts,
 } from '../contracts/mock.contracts';
 import { ERROR_TYPE } from '../../lib/constants';
 import { Message } from 'amqplib';
 
 @Controller()
 export class MicroserviceController {
-	constructor(private readonly rmqService: RMQService) {}
+	constructor(private readonly rmqService: RMQService) { }
 
 	@RMQRoute(SumContracts.topic)
 	@Validate()
@@ -88,5 +88,15 @@ export class MicroserviceController {
 		{ num }: CustomMessageFactoryContracts.Request, appId: string
 	): CustomMessageFactoryContracts.Response {
 		return { num, appId };
+	}
+
+	@RMQRoute(PatternStarContracts.topic)
+	starPattern({ num }: PatternStarContracts.Request): PatternStarContracts.Response {
+		return { num };
+	}
+
+	@RMQRoute(PatternHashContracts.topic)
+	hashPattern({ num }: PatternHashContracts.Request): PatternHashContracts.Response {
+		return { num };
 	}
 }

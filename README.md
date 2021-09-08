@@ -285,12 +285,35 @@ myMethod(numbers: number[]): number {
 }
 ```
 
+## Message patterns
+
+With exchange type `topic` you can use message patterns to subscribe to messages that corresponds to that pattern. You can use special symbols:
+- `*` - (star) can substitute for exactly one word.
+- `#`- (hash) can substitute for zero or more words.
+
+For example:
+- Pattern `*.*.rpc` will match `my.own.rpc` or `any.other.rpc` and will not match `this.is.cool.rpc` or `my.rpc`.
+- Pattern `compute.#` will match `compute.this.equation.rpc` and will not `do.compute.anything`.
+
+To subscribe to pattern, use it as route:
+
+```typescript
+import { RMQRoute } from 'nestjs-rmq';
+
+@RMQRoute('*.*.rpc')
+myMethod(): number {
+	// ...
+}
+```
+
+> Note: If two routes patterns matches message topic, only the first will be used.
+
 ## Getting message metadata
 
 To get more information from message (not just content) you can use `@RMQMessage` parameter decorator:
 
 ```typescript
-import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage } from 'nestjs-rmq';
+import { RMQRoute, Validate, RMQMessage, ExtendedMessage } from 'nestjs-rmq';
 
 @RMQRoute('my.rpc')
 myMethod(data: myClass, @RMQMessage msg: ExtendedMessage): number {
@@ -334,10 +357,9 @@ You can get all message properties that RMQ gets. Example:
 If you want to use your own [ack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack)/[nack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_ack) logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack/nack message that you get with `@RMQMessage`.
 
 ```typescript
-import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
+import { RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
 
 @Controller()
-@RMQController()
 export class MyController {
 	constructor(private readonly rmqService: RMQService) {}
 
@@ -362,10 +384,9 @@ export class MyController {
 `ExtendedMessage` has additional method to get all data from message to debug it. Also it serializes content and hides Buffers, because they can be massive. Then you can put all your debug info into Error or log it.
 
 ```typescript
-import { RMQController, RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
+import { RMQRoute, Validate, RMQMessage, ExtendedMessage, RMQService } from 'nestjs-rmq';
 
 @Controller()
-@RMQController()
 export class MyController {
 	constructor(private readonly rmqService: RMQService) {}
 
@@ -437,7 +458,7 @@ customMessageFactory({ num }: CustomMessageFactoryContracts.Request, appId: stri
 NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
 
 ```typescript
-import { RMQController, RMQRoute, Validate } from 'nestjs-rmq';
+import { RMQRoute, Validate } from 'nestjs-rmq';
 
 @RMQRoute('my.rpc')
 @Validate()
@@ -468,7 +489,7 @@ If your input data will be invalid, the library will send back an error without 
 To intercept any message to any route, you can use `@RMQPipe` decorator:
 
 ```typescript
-import { RMQController, RMQRoute, RMQPipe } from 'nestjs-rmq';
+import { RMQRoute, RMQPipe } from 'nestjs-rmq';
 
 @RMQPipe(MyPipeClass)
 @RMQRoute('my.rpc')
@@ -530,10 +551,17 @@ For e2e tests you need to install Docker in your machine and start RabbitMQ dock
 docker-compose up -d
 ```
 
-Then run tests with
+Then change IP in tests to `localhost` and run tests with:
+
+```
+npm run test:e2e
+```
+
+![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.png)
+
+
+For unit tests just run:
 
 ```
 npm run test
 ```
-
-![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.png)

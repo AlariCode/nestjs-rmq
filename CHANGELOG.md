@@ -1,5 +1,11 @@
 # Change log
 
+## 2.2.0
+
+-   Added pattern mathing for routes with `*` and `#`
+-   Added unit tests
+-   Updated e2e test
+
 ## 2.1.1
 
 -   Compatible with other amqp libraries (thx @Kevalin)

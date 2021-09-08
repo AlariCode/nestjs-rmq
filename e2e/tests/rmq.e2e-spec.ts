@@ -181,6 +181,18 @@ describe('RMQe2e', () => {
 		});
 	});
 
+	describe('msgPattent', () => {
+		it('* pattern', async () => {
+			const { num } = await apiController.star(1);
+			expect(num).toBe(1);
+		});
+
+		it('# pattern', async () => {
+			const { num } = await apiController.hash(1);
+			expect(num).toBe(1);
+		});
+	});
+
 	afterAll(async () => {
 		await delay(500);
 		await rmqService.disconnect();

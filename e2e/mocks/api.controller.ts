@@ -7,6 +7,8 @@ import {
 	ManualAckContracts,
 	MultiplyContracts,
 	NotificationContracts,
+	PatternHashContracts,
+	PatternStarContracts,
 	SumContracts,
 	TimeOutContracts,
 } from '../contracts/mock.contracts';
@@ -59,12 +61,20 @@ export class ApiController {
 	async debug(): Promise<DebugContracts.Response> {
 		return this.rmq.send<DebugContracts.Request, DebugContracts.Response>(
 			DebugContracts.topic, { prop1: [1], prop2: Buffer.from('test buffer') }
-			);
+		);
 	}
 
 	async customMessageFactory(num: number): Promise<CustomMessageFactoryContracts.Response> {
 		return this.rmq.send<CustomMessageFactoryContracts.Request, CustomMessageFactoryContracts.Response>(
 			CustomMessageFactoryContracts.topic, { num }
-			);
+		);
+	}
+
+	async star(num: number): Promise<PatternStarContracts.Response> {
+		return this.rmq.send<PatternStarContracts.Request, PatternStarContracts.Response>('this.is.star', { num });
+	}
+
+	async hash(num: number): Promise<PatternHashContracts.Response> {
+		return this.rmq.send<PatternHashContracts.Request, PatternHashContracts.Response>('this.is.hash', { num });
 	}
 }
