@@ -1,5 +1,9 @@
 # Change log
 
+## 2.3.1
+
+-   Fixed import
+
 ## 2.3.0
 
 -   Added RMQModule.forTest() to test your routes in unit or e2e test
