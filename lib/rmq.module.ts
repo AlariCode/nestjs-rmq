@@ -6,6 +6,7 @@ import { RMQExplorer } from './rmq.explorer';
 import { DiscoveryModule } from '@nestjs/core';
 import { RMQ_MODULE_OPTIONS } from './constants';
 import { RmqErrorService } from './rmq-error.service';
+import { RMQTestService } from './rmq-test.service';
 
 @Global()
 @Module({
@@ -27,6 +28,17 @@ export class RMQModule {
 			module: RMQModule,
 			imports: options.imports,
 			providers: [RMQService, RMQMetadataAccessor, RMQExplorer, asyncOptions],
+			exports: [RMQService],
+		};
+	}
+
+	static forTest(options: Partial<IRMQServiceOptions>) {
+		return {
+			module: RMQModule,
+			providers: [{
+				provide: RMQService,
+				useClass: RMQTestService
+			}, { provide: RMQ_MODULE_OPTIONS, useValue: options }],
 			exports: [RMQService],
 		};
 	}

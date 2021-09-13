@@ -15,6 +15,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	private routes: string[];
 	private logger: LoggerService;
 	private isInitialized: boolean = false;
+	private replyStack = new Map<number, Function>();
 
 	constructor(@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions, private readonly metadataAccessor: RMQMetadataAccessor) {
 		this.options = options;
@@ -31,7 +32,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 		this.reply = reply;
 	}
 
-	public async triggerRoute<T>(path: string, data: T) {
+	public async triggerRoute<T, R>(path: string, data: T, correlationId: number): Promise<R> {
 		return new Promise(async (resolve, reject) => {
 			let msg: Message = {
 				content: Buffer.from(JSON.stringify(data)),
@@ -41,33 +42,38 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 					exchange: 'mock',
 					routingKey: path,
 				},
-				properties: undefined
+				properties: {
+					messageId: 1,
+					timestamp: new Date(),
+					appId: 1,
+					clusterId: 1,
+					userId: 1,
+					type: '',
+					contentType: JSON,
+					contentEncoding: undefined,
+					headers: [],
+					deliveryMode: '',
+					priority: 0,
+					correlationId,
+					expiration: 0,
+					replyTo: 'mock'
+				}
 			}
 			const route = this.getRouteByTopic(path);
-			responseEmitter.on(ResponseEmitterResult.success, async (msg, result) => {
-				result = await this.intercept(result, msg);
-				resolve(result);
-			});
-			responseEmitter.on(ResponseEmitterResult.error, async (msg, err) => {
-				const result = await this.intercept('', msg, err);
-				resolve(result);
-			});
-			responseEmitter.on(ResponseEmitterResult.ack, async (msg) => {
-				this.ack(msg);
-			});
 			if (route) {
 				msg = await this.useMiddleware(msg);
+				this.replyStack.set(correlationId, resolve);
 				requestEmitter.emit(route, msg);
 			} else {
 				throw new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT);
 			}
 		})
-
 	}
 
 	public async init(): Promise<void> {
 		this.bindRMQRoutes();
 		this.logConnected();
+		this.attachEmitters();
 	}
 
 	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
@@ -89,6 +95,23 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	}
 
 	public async disconnect() {
+		responseEmitter.removeAllListeners();
+	}
+
+	private attachEmitters(): void {
+		responseEmitter.on(ResponseEmitterResult.success, async (msg: Message, result) => {
+			const resolve = this.replyStack.get(msg.properties.correlationId);
+			result = await this.intercept(result, msg);
+			resolve(result);
+		});
+		responseEmitter.on(ResponseEmitterResult.error, async (msg: Message, err) => {
+			const resolve = this.replyStack.get(msg.properties.correlationId);
+			const result = await this.intercept('', msg, err);
+			resolve(result);
+		});
+		responseEmitter.on(ResponseEmitterResult.ack, async (msg: Message) => {
+			this.ack(msg);
+		});
 	}
 
 	private async intercept(res: any, msg: Message, error?: Error) {
