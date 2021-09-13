@@ -1,5 +1,10 @@
 # Change log
 
+## 2.3.0
+
+-   Added RMQModule.forTest() to test your routes in unit or e2e test
+-   New RMQTestService lets you mock RMQ replies and errors
+
 ## 2.2.0
 
 -   Added pattern mathing for routes with `*` and `#`

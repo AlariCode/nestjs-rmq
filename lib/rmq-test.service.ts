@@ -7,15 +7,17 @@ import { IRMQService } from './interfaces/rmq-service.interface';
 import { RMQMetadataAccessor } from './rmq-metadata.accessor';
 import { requestEmitter, responseEmitter, ResponseEmitterResult } from './emmiters/router.emmiter';
 import { validateOptions } from './option.validator';
+import { getUniqId } from './utils/get-uniq-id';
 
 @Injectable()
 export class RMQTestService implements OnModuleInit, IRMQService {
-	private reply: unknown;
 	private options: IRMQServiceOptions;
 	private routes: string[];
 	private logger: LoggerService;
 	private isInitialized: boolean = false;
-	private replyStack = new Map<number, Function>();
+	private replyStack = new Map<string, { resolve: Function, reject: Function }>();
+	private mockStack = new Map<string, any>();
+	private mockErrorStack = new Map<string, any>();
 
 	constructor(@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions, private readonly metadataAccessor: RMQMetadataAccessor) {
 		this.options = options;
@@ -28,12 +30,17 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 		this.isInitialized = true;
 	}
 
-	public mockReply<T>(reply: T) {
-		this.reply = reply;
+	public mockReply<T>(topic: string, reply: T) {
+		this.mockStack.set(topic, reply);
 	}
 
-	public async triggerRoute<T, R>(path: string, data: T, correlationId: number): Promise<R> {
+	public mockError<T>(topic: string, error: T) {
+		this.mockErrorStack.set(topic, error);
+	}
+
+	public async triggerRoute<T, R>(path: string, data: T): Promise<R> {
 		return new Promise(async (resolve, reject) => {
+			const correlationId = getUniqId();
 			let msg: Message = {
 				content: Buffer.from(JSON.stringify(data)),
 				fields: {
@@ -45,7 +52,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 				properties: {
 					messageId: 1,
 					timestamp: new Date(),
-					appId: 1,
+					appId: this.options.serviceName,
 					clusterId: 1,
 					userId: 1,
 					type: '',
@@ -62,7 +69,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 			const route = this.getRouteByTopic(path);
 			if (route) {
 				msg = await this.useMiddleware(msg);
-				this.replyStack.set(correlationId, resolve);
+				this.replyStack.set(correlationId, { resolve, reject });
 				requestEmitter.emit(route, msg);
 			} else {
 				throw new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT);
@@ -83,7 +90,11 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
-		return this.reply as IReply;
+		const error = this.mockErrorStack.get(topic);
+		if (error) {
+			throw error;
+		}
+		return this.mockStack.get(topic) as IReply;
 	}
 
 	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
@@ -100,14 +111,14 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 
 	private attachEmitters(): void {
 		responseEmitter.on(ResponseEmitterResult.success, async (msg: Message, result) => {
-			const resolve = this.replyStack.get(msg.properties.correlationId);
+			const { resolve } = this.replyStack.get(msg.properties.correlationId);
 			result = await this.intercept(result, msg);
 			resolve(result);
 		});
 		responseEmitter.on(ResponseEmitterResult.error, async (msg: Message, err) => {
-			const resolve = this.replyStack.get(msg.properties.correlationId);
-			const result = await this.intercept('', msg, err);
-			resolve(result);
+			const { reject } = this.replyStack.get(msg.properties.correlationId);
+			await this.intercept('', msg, err);
+			reject(err);
 		});
 		responseEmitter.on(ResponseEmitterResult.ack, async (msg: Message) => {
 			this.ack(msg);

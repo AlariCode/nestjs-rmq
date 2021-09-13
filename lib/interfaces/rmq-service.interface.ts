@@ -9,6 +9,7 @@ export interface IRMQService {
 	notify: <IMessage>(topic: string, message: IMessage, options?: IPublishOptions) => Promise<void>
 	healthCheck: () => boolean;
 	disconnect: () => Promise<void>;
-	mockReply?: <T>(reply: T) => void;
-	triggerRoute?: <T, R>(path: string, data: T, correlationId: number) => Promise<R>;
+	mockReply?: <T>(topic: string, reply: T) => void;
+	mockError?: <T>(topic: string, error: T) => void;
+	triggerRoute?: <T, R>(path: string, data: T) => Promise<R>;
 }

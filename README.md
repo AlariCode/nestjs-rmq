@@ -9,31 +9,18 @@
 [![npm version](https://badgen.net/github/open-issues/AlariCode/nestjs-rmq)](https://github.com/AlariCode/nestjs-rmq/issues)
 [![npm version](https://badgen.net/github/prs/AlariCode/nestjs-rmq)](https://github.com/AlariCode/nestjs-rmq/pulls)
 
-This library will take care of RPC requests and messaging between microservices. It is easy to bind to our existing controllers to RMQ routes. This version is only for NestJS. If you want a framework agnostic library you can use [rabbitmq-messages](https://github.com/AlariCode/rabbitmq-messages)
+This library will take care of RPC requests and messaging between microservices. It is easy to bind to our existing controllers to RMQ routes. This version is only for NestJS.
 
-## Updated for NextJS 8!
-### Version 2 is out!
+**Updated for NestJS 8!**
 
-New version of nestjs-rmq contains minor breaking changes, and is simple to migrate to.
+## Why use this over RabbitMQ transport in NestJS docs?
 
--   `@RMQController` decorator is deprecated.
-    You will get warning if you continue to use it, and it will be deleted in future versions.
-    You can safely remove it from a controller or service. `msgFactory` inside options will not be functional anymore. You have to move it to `@RMQRoute`
--   `msgFactory` changed its interface from
-
-```typescript
-msgFactory?: (msg: Message, topic: IRouteMeta) => any[];
-```
-
-to
-
-```typescript
-msgFactory?: (msg: Message) => any[];
-```
-
-because all `IRouteMeta` already contained in `Message`.
-
--   `msgFactory` can be passed to `@RMQRoute` instead of `@RMQController`
+- Support for RMQ queue patterns with * and #.
+- Using exchanges with topic bindings rather the direct queue sending.
+- Additional `forTest()` method for emulating messages in unit or e2e tests without needing of RabbitMQ instance.
+- Additional decorators for getting info out of messages.
+- Support for class-validator decorators.
+- Real production usage with more than 100 microservices.
 
 ## Start
 
@@ -543,7 +530,73 @@ If `isConnected` equals `true`, you are successfully connected.
 
 If you want to close connection, for example, if you are using RMQ in testing tools, use `disconnect()` method;
 
-## Running test
+## Unit and E2e tests
+
+### Using in tests
+
+RMQ library supports using RMQ module in your test suites without needing RabbitMQ instance. To use library in tests, use `forTest` method in module.
+
+```typescript
+	beforeAll(async () => {
+		const apiModule = await Test.createTestingModule({
+			imports: [
+				RMQModule.forTest({})
+			],
+			controllers: [MicroserviceController],
+		}).compile();
+		api = apiModule.createNestApplication();
+		await api.init();
+
+		rmqService = apiModule.get<IRMQService>(RMQService);
+	});
+```
+
+You can pass any options you pass in normal `forRoot` (except `errorHandler`).
+
+From module, you will get `rmqService` which is similar to normal service, with two additional methods:
+
+- `triggerRoute` - trigger your RMQRoute, simulating incoming message.
+- `mockReply` - mock reply if you are using `send` method.
+- `mockError` - mock error if you are using `send` method.
+
+### triggerRoute
+
+Emulates message received buy your RMQRoute.
+
+```typescript
+const { result } = await rmqService.triggerRoute<Request, Response>(topic, data);
+```
+
+- `topic` - topic, that you want to trigger (pattern supported).
+- `data` - data to send in your method.
+
+### mockReply
+
+If your service needs to send data to other microservice, you can emulate its reply with:
+
+```typescript
+rmqService.mockReply(topic, res);
+```
+
+- `topic` - all messages sent to this topic will be mocked.
+- `res` - mocked response data.
+
+After this, all `rmqService.send(topic, { ... })` calls will return `res` data.
+
+### mockError
+
+If your service needs to send data to other microservice, you can emulate its error with:
+
+```typescript
+rmqService.mockError(topic, error);
+```
+
+- `topic` - all messages sent to this topic will be mocked.
+- `error` - error that `send` method will throw.
+
+After this, all `rmqService.send(topic, { ... })` calls will throw `error`.
+
+## Contributing
 
 For e2e tests you need to install Docker in your machine and start RabbitMQ docker image with `docker-compose.yml` in `e2e` folder:
 
@@ -565,3 +618,27 @@ For unit tests just run:
 ```
 npm run test
 ```
+
+
+### Migrating from version 1
+
+New version of nestjs-rmq contains minor breaking changes, and is simple to migrate to.
+
+-   `@RMQController` decorator is deprecated.
+    You will get warning if you continue to use it, and it will be deleted in future versions.
+    You can safely remove it from a controller or service. `msgFactory` inside options will not be functional anymore. You have to move it to `@RMQRoute`
+-   `msgFactory` changed its interface from
+
+```typescript
+msgFactory?: (msg: Message, topic: IRouteMeta) => any[];
+```
+
+to
+
+```typescript
+msgFactory?: (msg: Message) => any[];
+```
+
+because all `IRouteMeta` already contained in `Message`.
+
+-   `msgFactory` can be passed to `@RMQRoute` instead of `@RMQController`
