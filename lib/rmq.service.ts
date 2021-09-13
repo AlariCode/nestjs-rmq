@@ -29,9 +29,10 @@ import { validateOptions } from './option.validator';
 import { RMQMetadataAccessor } from './rmq-metadata.accessor';
 import { RmqErrorService } from './rmq-error.service';
 import { getUniqId } from './utils/get-uniq-id';
+import { IRMQService } from './interfaces/rmq-service.interface';
 
 @Injectable()
-export class RMQService implements OnModuleInit {
+export class RMQService implements OnModuleInit, IRMQService {
 	private server: AmqpConnectionManager = null;
 	private clientChannel: ChannelWrapper = null;
 	private subscriptionChannel: ChannelWrapper = null;
