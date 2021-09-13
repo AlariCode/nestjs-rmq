@@ -537,6 +537,10 @@ If you want to close connection, for example, if you are using RMQ in testing to
 RMQ library supports using RMQ module in your test suites without needing RabbitMQ instance. To use library in tests, use `forTest` method in module.
 
 ```typescript
+	import { RMQTestService } from 'nestjs-rmq';
+
+	let rmqService: RMQTestService;
+
 	beforeAll(async () => {
 		const apiModule = await Test.createTestingModule({
 			imports: [
@@ -547,7 +551,7 @@ RMQ library supports using RMQ module in your test suites without needing Rabbit
 		api = apiModule.createNestApplication();
 		await api.init();
 
-		rmqService = apiModule.get<IRMQService>(RMQService);
+		rmqService = apiModule.get(RMQService);
 	});
 ```
 

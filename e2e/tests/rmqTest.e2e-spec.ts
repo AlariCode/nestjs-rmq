@@ -2,15 +2,15 @@ import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
 import { INestApplication } from '@nestjs/common';
 import { MicroserviceController } from '../mocks/microservice.controller';
-import { IRMQService } from '../../lib/interfaces/rmq-service.interface';
 import { AppIdContracts, CustomMessageFactoryContracts, DivideContracts, MultiplyContracts, PatternHashContracts, PatternStarContracts, SumContracts } from '../contracts/mock.contracts';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
 import { DoublePipe } from '../mocks/double.pipe';
 import { ZeroIntercepter } from '../mocks/zero.intercepter';
+import { RMQTestService } from '../../lib/rmq-test.service';
 
 describe('RMQe2e forTest()', () => {
 	let api: INestApplication;
-	let rmqService: IRMQService;
+	let rmqService: RMQTestService;
 
 	beforeAll(async () => {
 		const apiModule = await Test.createTestingModule({
@@ -26,7 +26,7 @@ describe('RMQe2e forTest()', () => {
 		api = apiModule.createNestApplication();
 		await api.init();
 
-		rmqService = apiModule.get<IRMQService>(RMQService);
+		rmqService = apiModule.get(RMQService);
 	});
 
 	describe('Running methods', () => {

@@ -1,5 +1,6 @@
 export * from './rmq.module';
 export * from './rmq.service';
+export * from './rmq-error.service';
 export * from './interfaces/rmq-error-headers.interface';
 export * from './interfaces/rmq-options.interface';
 export * from './interfaces/rmq-publish-options.interface';
