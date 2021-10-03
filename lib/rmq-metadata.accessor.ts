@@ -8,6 +8,7 @@ import {
 } from './constants';
 import { IRouteOptions } from './interfaces/queue-meta.interface';
 import { RMQService } from './rmq.service';
+import { getRouteKey } from './utils/get-route-key';
 
 @Injectable()
 export class RMQMetadataAccessor {
@@ -17,13 +18,17 @@ export class RMQMetadataAccessor {
 		return this.reflector.get(RMQ_ROUTES_PATH, target);
 	}
 
-	getAllRMQPaths(): string[] {
-		return Reflect.getMetadata(RMQ_ROUTES_META, RMQService) ?? [];
+	getAllRMQRouteKeys(serviceName?: string): string[] {
+		serviceName = serviceName ? getRouteKey('', serviceName) : undefined;
+		return (Reflect.getMetadata(RMQ_ROUTES_META, RMQService) ?? [])
+			.filter(
+				(m: string) => !serviceName || m.startsWith(serviceName)
+			);
 	}
 
-	addRMQPath(path: string): void {
-		const paths: string[] = this.getAllRMQPaths();
-		paths.push(path);
+	addRMQRouteKey(routeKey: string): void {
+		const paths: string[] = this.getAllRMQRouteKeys();
+		paths.push(routeKey);
 		Reflect.defineMetadata(RMQ_ROUTES_META, paths, RMQService);
 	}
 

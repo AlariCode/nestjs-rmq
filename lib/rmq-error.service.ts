@@ -4,14 +4,16 @@ import { hostname } from 'os';
 import { Message } from 'amqplib';
 import { RMQErrorHandler } from './classes/rmq-error-handler.class';
 import { IRMQServiceOptions } from './interfaces/rmq-options.interface';
-import { RMQ_MODULE_OPTIONS } from './constants';
+import { DEFAULT_SERVICE_NAME, RMQ_MODULE_OPTIONS } from './constants';
 
 @Injectable()
 export class RmqErrorService {
 	private options: IRMQServiceOptions;
+	public readonly name: string;
 
 	constructor(@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions) {
 		this.options = options;
+		this.name = this.options.name ?? DEFAULT_SERVICE_NAME;
 	}
 
 	public buildError(error: Error | RMQError) {
