@@ -10,7 +10,7 @@ import {
 	ManualAckContracts,
 	DebugContracts, CustomMessageFactoryContracts, PatternStarContracts, PatternHashContracts,
 } from '../contracts/mock.contracts';
-import { ERROR_TYPE } from '../../lib/constants';
+import { DEFAULT_SERVICE_NAME, ERROR_TYPE } from '../../lib/constants';
 import { Message } from 'amqplib';
 
 @Controller()
@@ -33,10 +33,36 @@ export class MicroserviceController {
 		return { result: arrayToSum.reduce((prev, cur) => prev + cur) };
 	}
 
+	@RMQRoute(SumContracts.topic, { name: 'test2' })
+	@Validate()
+	sumRpc2({ arrayToSum }: SumContracts.Request): SumContracts.Response {
+		const result = arrayToSum.reduce((prev, cur) => prev + cur);
+		return { result };
+	}
+
+	@RMQRoute(SumContracts.topic, { name: 'test3' })
+	@Validate()
+	sumRpc3({ arrayToSum }: SumContracts.Request): SumContracts.Response {
+		const result = arrayToSum.reduce((prev, cur) => prev + cur);
+		if (result !== 2) {
+			throw new Error('Do I look like a calculator to you?');
+		}
+
+		return { result };
+	}
+
 	@RMQRoute(NotificationContracts.topic)
 	@Validate()
 	notificationNone({ message }: NotificationContracts.Request): void {
 		console.log(message);
+		return;
+	}
+
+	@RMQRoute(NotificationContracts.topic, { name: ['test2', 'test3'] })
+	@Validate()
+	notificationNone2({ message }: NotificationContracts.Request, @RMQMessage msg: ExtendedMessage): void {
+		console.log(message);
+		console.log(msg.serviceName);
 		return;
 	}
 

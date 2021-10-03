@@ -1,31 +1,42 @@
 import { Inject, Injectable, LoggerService, OnModuleInit } from '@nestjs/common';
 import { Channel, Message } from 'amqplib';
 import { IPublishOptions, IRMQServiceOptions, RMQError } from '.';
-import { CONNECTED_MESSAGE, ERROR_NO_ROUTE, ERROR_TYPE, RMQ_MODULE_OPTIONS } from './constants';
+import { CONNECTED_MESSAGE, DEFAULT_SERVICE_NAME, ERROR_NO_ROUTE, ERROR_TYPE, RMQ_MODULE_OPTIONS } from './constants';
 import { RQMColorLogger } from './helpers/logger';
 import { IRMQService } from './interfaces/rmq-service.interface';
 import { RMQMetadataAccessor } from './rmq-metadata.accessor';
 import { requestEmitter, responseEmitter, ResponseEmitterResult } from './emmiters/router.emmiter';
 import { validateOptions } from './option.validator';
 import { getUniqId } from './utils/get-uniq-id';
+import { IRMQMessage } from './interfaces/rmq-message.interface';
+import { getRouteKey } from './utils/get-route-key';
 
 @Injectable()
 export class RMQTestService implements OnModuleInit, IRMQService {
 	private options: IRMQServiceOptions;
-	private routes: string[];
+	private routeKeys: string[];
 	private logger: LoggerService;
-	private isInitialized: boolean = false;
 	private replyStack = new Map<string, { resolve: Function, reject: Function }>();
 	private mockStack = new Map<string, any>();
 	private mockErrorStack = new Map<string, any>();
+	private isInitialized = false;
+	public readonly name: string;
 
-	constructor(@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions, private readonly metadataAccessor: RMQMetadataAccessor) {
+	constructor(
+		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
+		private readonly metadataAccessor: RMQMetadataAccessor
+	) {
 		this.options = options;
-		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
+		this.name = options.name ?? DEFAULT_SERVICE_NAME;
+		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages, this.name);
 		validateOptions(this.options, this.logger);
 	}
 
 	async onModuleInit() {
+		if (this.isInitialized) {
+			return;
+		}
+
 		await this.init();
 		this.isInitialized = true;
 	}
@@ -41,7 +52,8 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	public async triggerRoute<T, R>(path: string, data: T): Promise<R> {
 		return new Promise(async (resolve, reject) => {
 			const correlationId = getUniqId();
-			let msg: Message = {
+			let msg: IRMQMessage = {
+				serviceName: this.name,
 				content: Buffer.from(JSON.stringify(data)),
 				fields: {
 					deliveryTag: 1,
@@ -65,8 +77,9 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 					expiration: 0,
 					replyTo: 'mock'
 				}
-			}
-			const route = this.getRouteByTopic(path);
+			};
+
+			const route = this.getRouteKeyByTopic(path);
 			if (route) {
 				msg = await this.useMiddleware(msg);
 				this.replyStack.set(correlationId, { resolve, reject });
@@ -74,7 +87,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 			} else {
 				throw new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT);
 			}
-		})
+		});
 	}
 
 	public async init(): Promise<void> {
@@ -106,23 +119,36 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	}
 
 	public async disconnect() {
-		responseEmitter.removeAllListeners();
+		this.detachEmitters();
+	}
+
+	private detachEmitters(): void {
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.success, this.name), this.onSuccessResponse);
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.error, this.name), this.onErrorResponse);
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.ack, this.name), this.onAcknowledgeResponse);
 	}
 
 	private attachEmitters(): void {
-		responseEmitter.on(ResponseEmitterResult.success, async (msg: Message, result) => {
-			const { resolve } = this.replyStack.get(msg.properties.correlationId);
-			result = await this.intercept(result, msg);
-			resolve(result);
-		});
-		responseEmitter.on(ResponseEmitterResult.error, async (msg: Message, err) => {
-			const { reject } = this.replyStack.get(msg.properties.correlationId);
-			await this.intercept('', msg, err);
-			reject(err);
-		});
-		responseEmitter.on(ResponseEmitterResult.ack, async (msg: Message) => {
-			this.ack(msg);
-		});
+		this.detachEmitters();
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.success, this.name), this.onSuccessResponse);
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.error, this.name), this.onErrorResponse);
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.ack, this.name), this.onAcknowledgeResponse);
+	}
+
+	private onSuccessResponse = async (msg: Message, result: any): Promise<void> => {
+		const { resolve } = this.replyStack.get(msg.properties.correlationId);
+		result = await this.intercept(result, msg);
+		resolve(result);
+	}
+
+	private onErrorResponse = async (msg: Message, err: Error | RMQError): Promise<void> => {
+		const { reject } = this.replyStack.get(msg.properties.correlationId);
+		await this.intercept('', msg, err);
+		reject(err);
+	}
+
+	private onAcknowledgeResponse = (msg: Message): void => {
+		this.ack(msg);
 	}
 
 	private async intercept(res: any, msg: Message, error?: Error) {
@@ -136,31 +162,35 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	}
 
 	private async bindRMQRoutes(): Promise<void> {
-		this.routes = this.metadataAccessor.getAllRMQPaths();
-		if (this.routes.length > 0) {
-			this.routes.map(async (r) => {
+		this.routeKeys = this.metadataAccessor.getAllRMQRouteKeys(this.name);
+		if (this.routeKeys.length > 0) {
+			this.routeKeys.map(async (r) => {
 				this.logger.log(`Mapped ${r}`, 'RMQRoute');
 			});
 		}
 	}
 
-	private async useMiddleware(msg: Message) {
+	private async useMiddleware(msg: IRMQMessage) {
 		if (!this.options.middleware || this.options.middleware.length === 0) {
 			return msg;
 		}
 		for (const middleware of this.options.middleware) {
-			msg = await new middleware(this.logger).transform(msg);
+			// to be backward compatible
+			msg = (await new middleware(this.logger).transform(msg)) as IRMQMessage;
+			msg.serviceName = this.name;
 		}
 		return msg;
 	}
 
-	private getRouteByTopic(topic: string): string {
-		return this.routes.find((route) => {
-			if (route === topic) {
+	private getRouteKeyByTopic(topic: string): string {
+		const routeKey = getRouteKey(topic, this.name);
+
+		return this.routeKeys.find((route) => {
+			if (route === routeKey) {
 				return true;
 			}
 			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\.?)+') + '$';
-			return topic.search(regexString) !== -1;
+			return routeKey.search(regexString) !== -1;
 		});
 	}
 

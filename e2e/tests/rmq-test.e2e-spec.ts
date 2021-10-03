@@ -2,7 +2,15 @@ import { Test } from '@nestjs/testing';
 import { RMQModule, RMQService } from '../../lib';
 import { INestApplication } from '@nestjs/common';
 import { MicroserviceController } from '../mocks/microservice.controller';
-import { AppIdContracts, CustomMessageFactoryContracts, DivideContracts, MultiplyContracts, PatternHashContracts, PatternStarContracts, SumContracts } from '../contracts/mock.contracts';
+import {
+	AppIdContracts,
+	CustomMessageFactoryContracts,
+	DivideContracts,
+	MultiplyContracts,
+	PatternHashContracts,
+	PatternStarContracts,
+	SumContracts
+} from '../contracts/mock.contracts';
 import { ERROR_UNDEFINED_FROM_RPC } from '../../lib/constants';
 import { DoublePipe } from '../mocks/double.pipe';
 import { ZeroIntercepter } from '../mocks/zero.intercepter';
@@ -113,28 +121,46 @@ describe('RMQe2e forTest()', () => {
 
 	describe('middleware', () => {
 		it('doublePipe', async () => {
-			const { result } = await rmqService.triggerRoute<MultiplyContracts.Request, MultiplyContracts.Response>(MultiplyContracts.topic, {
+			const { result } = await rmqService.triggerRoute<
+				MultiplyContracts.Request,
+				MultiplyContracts.Response
+				>(
+					MultiplyContracts.topic,
+					{
 				arrayToMultiply: [1, 2]
-			});
+					}
+				);
 			expect(result).toBe(8);
 		});
 	});
 
 	describe('interceptor', () => {
 		it('zeroInterceptor', async () => {
-			const { result } = await rmqService.triggerRoute<DivideContracts.Request, DivideContracts.Response>(DivideContracts.topic, {
+			const { result } = await rmqService.triggerRoute<
+				DivideContracts.Request,
+				DivideContracts.Response
+				>(
+					DivideContracts.topic,
+					{
 				first: 10,
 				second: 5
-			});
+				}
+				);
 			expect(result).toBe(0);
 		});
 	});
 
 	describe('msgFactory', () => {
 		it('customMessageFactory', async () => {
-			const { num, appId } = await rmqService.triggerRoute<CustomMessageFactoryContracts.Request, CustomMessageFactoryContracts.Response>(CustomMessageFactoryContracts.topic, {
+			const { num, appId } = await rmqService.triggerRoute<
+				CustomMessageFactoryContracts.Request,
+				CustomMessageFactoryContracts.Response
+			>(
+				CustomMessageFactoryContracts.topic,
+				{
 				num: 1
-			});
+				}
+			);
 			expect(num).toBe(2);
 			expect(appId).toBe('test-service');
 		});
@@ -142,16 +168,28 @@ describe('RMQe2e forTest()', () => {
 
 	describe('msgPattent', () => {
 		it('* pattern', async () => {
-			const { num } = await rmqService.triggerRoute<PatternStarContracts.Request, PatternStarContracts.Response>(PatternStarContracts.topic, {
+			const { num } = await rmqService.triggerRoute<
+				PatternStarContracts.Request,
+				PatternStarContracts.Response
+			>(
+				PatternStarContracts.topic,
+				{
 				num: 1
-			});
+				}
+			);
 			expect(num).toBe(1);
 		});
 
 		it('# pattern', async () => {
-			const { num } = await rmqService.triggerRoute<PatternHashContracts.Request, PatternHashContracts.Response>(PatternHashContracts.topic, {
-				num: 1
-			});
+			const { num } = await rmqService.triggerRoute<
+				PatternHashContracts.Request,
+				PatternHashContracts.Response
+			>(
+				PatternHashContracts.topic,
+				{
+					num: 1
+				}
+			);
 			expect(num).toBe(1);
 		});
 	});

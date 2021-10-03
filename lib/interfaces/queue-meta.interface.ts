@@ -1,4 +1,4 @@
-import { Message } from 'amqplib';
+import { IRMQMessage } from './rmq-message.interface';
 
 export interface IRouteMeta {
 	topic: string;
@@ -8,6 +8,7 @@ export interface IRouteMeta {
 }
 
 export interface IRouteOptions {
+	name?: string | string[];
 	manualAck?: boolean;
-	msgFactory?: (msg: Message) => any[];
+	msgFactory?: (msg: IRMQMessage) => any[];
 }

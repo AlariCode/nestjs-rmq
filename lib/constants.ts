@@ -20,6 +20,7 @@ export const DEFAULT_RECONNECT_TIME: number = 5;
 export const DEFAULT_HEARTBEAT_TIME: number = 5;
 export const DEFAULT_TIMEOUT: number = 30000;
 export const DEFAULT_PREFETCH_COUNT: number = 0;
+export const DEFAULT_SERVICE_NAME: string = 'Default';
 export const INITIALIZATION_STEP_DELAY: number = 300;
 
 export enum ERROR_TYPE {

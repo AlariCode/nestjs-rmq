@@ -13,7 +13,7 @@ import {
 	ERROR_TYPE,
 	REPLY_QUEUE,
 	DEFAULT_HEARTBEAT_TIME,
-	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE,
+	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE, DEFAULT_SERVICE_NAME,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -30,6 +30,8 @@ import { RMQMetadataAccessor } from './rmq-metadata.accessor';
 import { RmqErrorService } from './rmq-error.service';
 import { getUniqId } from './utils/get-uniq-id';
 import { IRMQService } from './interfaces/rmq-service.interface';
+import { IRMQMessage } from './interfaces/rmq-message.interface';
+import { getRouteKey, getTopic } from './utils/get-route-key';
 
 @Injectable()
 export class RMQService implements OnModuleInit, IRMQService {
@@ -39,11 +41,11 @@ export class RMQService implements OnModuleInit, IRMQService {
 	private options: IRMQServiceOptions;
 	private sendResponseEmitter: EventEmitter = new EventEmitter();
 	private replyQueue: string = REPLY_QUEUE;
-	private routes: string[];
+	private routeKeys: string[];
 	private logger: LoggerService;
-
 	private isConnected: boolean = false;
 	private isInitialized: boolean = false;
+	public readonly name: string;
 
 	constructor(
 		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
@@ -51,11 +53,16 @@ export class RMQService implements OnModuleInit, IRMQService {
 		private readonly errorService: RmqErrorService
 	) {
 		this.options = options;
-		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
+		this.name = this.options.name ?? DEFAULT_SERVICE_NAME;
+		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages, this.name);
 		validateOptions(this.options, this.logger);
 	}
 
 	async onModuleInit() {
+		if (this.isInitialized) {
+			return;
+		}
+
 		await this.init();
 		this.isInitialized = true;
 	}
@@ -177,7 +184,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
 						this.options.isGlobalPrefetchCount ?? false
 					);
-					if (this.options.queueName) {
+					if (typeof this.options.queueName === 'string') {
 						this.listen(channel);
 					}
 					this.logConnected();
@@ -208,21 +215,29 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private async listen(channel: Channel) {
-		await channel.assertQueue(this.options.queueName, {
+		const queue = await channel.assertQueue(this.options.queueName, {
 			durable: this.options.isQueueDurable ?? true,
+			exclusive: this.options.isQueueExclusive ?? !this.options.queueName,
 			arguments: this.options.queueArguments ?? {},
 		});
+		this.options.queueName = queue.queue;
+
 		await this.bindRMQRoutes(channel);
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
-				this.logger.debug(`Received ▼ [${msg.fields.routingKey}] ${msg.content}`);
-				const route = this.getRouteByTopic(msg.fields.routingKey);
-				if (route) {
-					msg = await this.useMiddleware(msg);
-					requestEmitter.emit(route, msg);
+				const message: IRMQMessage = {
+					...msg,
+					serviceName: this.name
+				};
+
+				this.logger.debug(`Received ▼ [${message.fields.routingKey}] ${message.content}`);
+				const routeKey = this.getRouteKeyByTopic(message.fields.routingKey);
+				if (routeKey) {
+					msg = await this.useMiddleware(message);
+					requestEmitter.emit(routeKey, message);
 				} else {
-					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
+					this.reply('', message, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
 				}
 			},
 			{ noAck: false }
@@ -230,29 +245,39 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private async bindRMQRoutes(channel: Channel): Promise<void> {
-		this.routes = this.metadataAccessor.getAllRMQPaths();
-		if (this.routes.length > 0) {
-			this.routes.map(async (r) => {
+		this.routeKeys = this.metadataAccessor.getAllRMQRouteKeys(this.name);
+
+		if (this.routeKeys.length > 0) {
+			this.routeKeys.map(async (r) => {
 				this.logger.log(`Mapped ${r}`, 'RMQRoute');
-				await channel.bindQueue(this.options.queueName, this.options.exchangeName, r);
+				await channel.bindQueue(this.options.queueName, this.options.exchangeName, getTopic(r));
 			});
 		}
 	}
 
 	private detachEmitters(): void {
-		responseEmitter.removeAllListeners();
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.success, this.name), this.onSuccessResponse);
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.error, this.name), this.onErrorResponse);
+		responseEmitter.removeListener(getRouteKey(ResponseEmitterResult.ack, this.name), this.onAcknowledgeResponse);
 	}
 
 	private attachEmitters(): void {
-		responseEmitter.on(ResponseEmitterResult.success, async (msg, result) => {
-			this.reply(result, msg);
-		});
-		responseEmitter.on(ResponseEmitterResult.error, async (msg, err) => {
-			this.reply('', msg, err);
-		});
-		responseEmitter.on(ResponseEmitterResult.ack, async (msg) => {
-			this.ack(msg);
-		});
+		this.detachEmitters();
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.success, this.name), this.onSuccessResponse);
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.error, this.name), this.onErrorResponse);
+		responseEmitter.on(getRouteKey(ResponseEmitterResult.ack, this.name), this.onAcknowledgeResponse);
+	}
+
+	private onSuccessResponse = (msg: Message, result: any): void => {
+		this.reply(result, msg);
+	}
+
+	private onErrorResponse = (msg: Message, err: Error | RMQError): void => {
+		this.reply('', msg, err);
+	}
+
+	private onAcknowledgeResponse = (msg: Message): void => {
+		this.ack(msg);
 	}
 
 	private async reply(res: any, msg: Message, error: Error | RMQError = null) {
@@ -266,22 +291,26 @@ export class RMQService implements OnModuleInit, IRMQService {
 		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
 	}
 
-	private getRouteByTopic(topic: string): string {
-		return this.routes.find((route) => {
-			if (route === topic) {
+	private getRouteKeyByTopic(topic: string): string {
+		const routeKey = getRouteKey(topic, this.name);
+
+		return this.routeKeys.find((route) => {
+			if (route === routeKey) {
 				return true;
 			}
 			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\.?)+') + '$';
-			return topic.search(regexString) !== -1;
+			return routeKey.search(regexString) !== -1;
 		});
 	}
 
-	private async useMiddleware(msg: Message) {
+	private async useMiddleware(msg: IRMQMessage) {
 		if (!this.options.middleware || this.options.middleware.length === 0) {
 			return msg;
 		}
 		for (const middleware of this.options.middleware) {
-			msg = await new middleware(this.logger).transform(msg);
+			// to be backward compatible
+			msg = (await new middleware(this.logger).transform(msg)) as IRMQMessage;
+			msg.serviceName = this.name;
 		}
 		return msg;
 	}
@@ -310,7 +339,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 
 	private logConnected() {
 		this.logger.log(CONNECTED_MESSAGE, 'RMQModule');
-		if (!this.options.queueName && this.metadataAccessor.getAllRMQPaths().length > 0) {
+		if (!this.options.queueName && this.metadataAccessor.getAllRMQRouteKeys(this.name).length > 0) {
 			this.logger.warn(ERROR_NO_QUEUE, 'RMQModule');
 		}
 	}

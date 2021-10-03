@@ -3,17 +3,17 @@ import { DiscoveryService } from '@nestjs/core';
 import { InstanceWrapper } from '@nestjs/core/injector/instance-wrapper';
 import { MetadataScanner } from '@nestjs/core/metadata-scanner';
 import { RMQMetadataAccessor } from './rmq-metadata.accessor';
-import { Message } from 'amqplib';
 import { requestEmitter, responseEmitter, ResponseEmitterResult } from './emmiters/router.emmiter';
-import { ERROR_TYPE, ERROR_UNDEFINED_FROM_RPC } from './constants';
+import { DEFAULT_SERVICE_NAME, ERROR_TYPE, ERROR_UNDEFINED_FROM_RPC } from './constants';
 import { ExtendedMessage } from './classes/rmq-extended-message.class';
 import { RMQError } from './classes/rmq-error.class';
 import { IRouteOptions } from './interfaces/queue-meta.interface';
 import { validate } from 'class-validator';
+import { IRMQMessage } from './interfaces/rmq-message.interface';
+import { getRouteKey } from './utils/get-route-key';
 
 @Injectable()
 export class RMQExplorer implements OnModuleInit {
-
 	constructor(
 		private readonly discoveryService: DiscoveryService,
 		private readonly metadataAccessor: RMQMetadataAccessor,
@@ -50,12 +50,26 @@ export class RMQExplorer implements OnModuleInit {
 		if (!path || !options) {
 			return;
 		}
-		this.metadataAccessor.addRMQPath(path);
-		this.attachEmitter(path, options, instance, methodRef);
+
+		const services = typeof options.name === 'string' ?
+			[options.name] :
+			(options.name ?? [DEFAULT_SERVICE_NAME]);
+
+		for (const service of services) {
+			const routeKey = getRouteKey(path, service);
+			this.metadataAccessor.addRMQRouteKey(routeKey);
+			this.attachEmitter(routeKey, service, options, instance, methodRef);
+		}
 	}
 
-	private attachEmitter(path: string, options: IRouteOptions, instance: Record<string, Function>, methodRef: Function) {
-		requestEmitter.on(path, async (msg: Message) => {
+	private attachEmitter(
+		routeKey: string,
+		serviceName: string,
+		options: IRouteOptions,
+		instance: Record<string, Function>,
+		methodRef: Function
+	) {
+		requestEmitter.on(routeKey, async (msg: IRMQMessage) => {
 			const messageParams: number[] =
 				this.metadataAccessor.getRMQMessageIndexes(Object.getPrototypeOf(instance), methodRef.name);
 			try {
@@ -70,30 +84,44 @@ export class RMQExplorer implements OnModuleInit {
 				const error = await this.validateRequest(instance, methodRef, funcArgs);
 				if (error) {
 					responseEmitter.emit(
-						ResponseEmitterResult.error,
+						getRouteKey(ResponseEmitterResult.error, serviceName),
 						msg,
 						new RMQError(error, ERROR_TYPE.RMQ),
 					);
-					responseEmitter.emit(ResponseEmitterResult.ack, msg);
+					responseEmitter.emit(
+						getRouteKey(ResponseEmitterResult.ack, serviceName),
+						msg
+					);
 					return;
 				}
 				const result = await methodRef.apply(instance, funcArgs);
 				if (msg.properties.replyTo && result) {
-					responseEmitter.emit(ResponseEmitterResult.success, msg, result);
+					responseEmitter.emit(
+						getRouteKey(ResponseEmitterResult.success, serviceName),
+						msg,
+						result
+					);
 				} else if (msg.properties.replyTo && result === undefined) {
 					responseEmitter.emit(
-						ResponseEmitterResult.error,
+						getRouteKey(ResponseEmitterResult.error, serviceName),
 						msg,
 						new RMQError(ERROR_UNDEFINED_FROM_RPC, ERROR_TYPE.RMQ),
 					);
 				}
 			} catch (err) {
 				if (msg.properties.replyTo) {
-					responseEmitter.emit(ResponseEmitterResult.error, msg, err);
+					responseEmitter.emit(
+						getRouteKey(ResponseEmitterResult.error, serviceName),
+						msg,
+						err
+					);
 				}
 			}
 			if (!options?.manualAck) {
-				responseEmitter.emit(ResponseEmitterResult.ack, msg);
+				responseEmitter.emit(
+					getRouteKey(ResponseEmitterResult.ack, serviceName),
+					msg
+				);
 			}
 		});
 	}
@@ -120,6 +148,6 @@ export class RMQExplorer implements OnModuleInit {
 	}
 }
 
-export const RMQMessageFactory = (msg: Message) => {
+export const RMQMessageFactory = (msg: IRMQMessage) => {
 	return [JSON.parse(msg.content.toString())];
 };

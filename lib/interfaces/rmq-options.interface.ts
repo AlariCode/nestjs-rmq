@@ -5,7 +5,7 @@ import { LoggerService } from '@nestjs/common';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Channel, Options } from 'amqplib';
 
-export interface IRMQServiceOptions {
+export interface IRMQServiceBaseOptions {
 	exchangeName: string;
 	connections: IRMQConnection[];
 	queueName?: string;
@@ -15,6 +15,7 @@ export interface IRMQServiceOptions {
 	prefetchCount?: number;
 	isGlobalPrefetchCount?: boolean;
 	isQueueDurable?: boolean;
+	isQueueExclusive?: boolean;
 	isExchangeDurable?: boolean;
 	assertExchangeType?: Parameters<Channel['assertExchange']>[1];
 	exchangeOptions?: Options.AssertExchange;
@@ -29,6 +30,10 @@ export interface IRMQServiceOptions {
 	serviceName?: string;
 }
 
+export interface IRMQServiceOptions extends IRMQServiceBaseOptions {
+	name?: string;
+}
+
 export interface IRMQConnection {
 	login: string;
 	password: string;
@@ -38,6 +43,7 @@ export interface IRMQConnection {
 }
 
 export interface IRMQServiceAsyncOptions extends Pick<ModuleMetadata, 'imports'> {
-	useFactory?: (...args: any[]) => Promise<IRMQServiceOptions> | IRMQServiceOptions;
+	name?: string;
+	useFactory?: (...args: any[]) => Promise<IRMQServiceBaseOptions> | IRMQServiceBaseOptions;
 	inject?: any[];
 }

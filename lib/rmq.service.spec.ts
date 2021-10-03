@@ -7,8 +7,8 @@ describe('RMQService', () => {
 	let rmqService: RMQService;
 
 	beforeEach(async () => {
-		let accessor = new RMQMetadataAccessor(new Reflector());
-		let errorService = new RmqErrorService({
+		const accessor = new RMQMetadataAccessor(new Reflector());
+		const errorService = new RmqErrorService({
 			exchangeName: 'test',
 			connections: []
 		});
@@ -17,43 +17,43 @@ describe('RMQService', () => {
 			serviceName: '',
 			connections: []
 		}, accessor, errorService);
-		rmqService['routes'] = [
-			'exect.match.rpc',
-			'*.*.star',
-			'#.hash',
-			'pattent.#',
-		]
+		rmqService['routeKeys'] = [
+			'Default:exect.match.rpc',
+			'Default:*.*.star',
+			'Default:#.hash',
+			'Default:pattent.#',
+		];
 	});
 
 
 	describe('Test regex', () => {
 		it('Matching', async () => {
-			const res = rmqService['getRouteByTopic']('exect.match.rpc')
-			expect(res).toBe(rmqService['routes'][0]);
+			const res = rmqService['getRouteKeyByTopic']('exect.match.rpc');
+			expect(res).toBe(rmqService['routeKeys'][0]);
 		});
 
 		it('Pattern * - success', async () => {
-			const res = rmqService['getRouteByTopic']('oh.thisis.star')
-			expect(res).toBe(rmqService['routes'][1]);
+			const res = rmqService['getRouteKeyByTopic']('oh.thisis.star');
+			expect(res).toBe(rmqService['routeKeys'][1]);
 		});
 
 		it('Pattern * - fail', async () => {
-			const res = rmqService['getRouteByTopic']('oh.this.is.star')
+			const res = rmqService['getRouteKeyByTopic']('oh.this.is.star');
 			expect(res).toBe(undefined);
 		});
 
 		it('Pattern # - success start', async () => {
-			const res = rmqService['getRouteByTopic']('this.is.real.hash')
-			expect(res).toBe(rmqService['routes'][2]);
+			const res = rmqService['getRouteKeyByTopic']('this.is.real.hash');
+			expect(res).toBe(rmqService['routeKeys'][2]);
 		});
 
 		it('Pattern # - success end', async () => {
-			const res = rmqService['getRouteByTopic']('pattent.topic')
-			expect(res).toBe(rmqService['routes'][3]);
+			const res = rmqService['getRouteKeyByTopic']('pattent.topic');
+			expect(res).toBe(rmqService['routeKeys'][3]);
 		});
 
 		it('Pattern # - fail', async () => {
-			const res = rmqService['getRouteByTopic']('this.pattent.topic')
+			const res = rmqService['getRouteKeyByTopic']('this.pattent.topic');
 			expect(res).toBe(undefined);
 		});
 	});
