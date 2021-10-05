@@ -31,10 +31,10 @@ export interface IRMQServiceOptions {
 }
 
 export interface IRMQConnection {
-	protocol: RMQ_PROTOCOL,
 	login: string;
 	password: string;
 	host: string;
+	protocol?: RMQ_PROTOCOL,
 	port?: number;
 	vhost?: string;
 }

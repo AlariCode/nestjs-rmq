@@ -13,7 +13,7 @@ import {
 	ERROR_TYPE,
 	REPLY_QUEUE,
 	DEFAULT_HEARTBEAT_TIME,
-	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE,
+	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE, RMQ_PROTOCOL,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -150,7 +150,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private createConnectionUri(connection: IRMQConnection): string {
-		let uri = `${connection.protocol}://${connection.login}:${connection.password}@${connection.host}`;
+		let uri = `${connection.protocol || RMQ_PROTOCOL.AMQP}://${connection.login}:${connection.password}@${connection.host}`;
 		if (connection.port) {
 			uri += `:${connection.port}`;
 		}
