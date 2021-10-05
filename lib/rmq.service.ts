@@ -150,7 +150,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private createConnectionUri(connection: IRMQConnection): string {
-		let uri = `amqp://${connection.login}:${connection.password}@${connection.host}`;
+		let uri = `${connection.protocol}://${connection.login}:${connection.password}@${connection.host}`;
 		if (connection.port) {
 			uri += `:${connection.port}`;
 		}

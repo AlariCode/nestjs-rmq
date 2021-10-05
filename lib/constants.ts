@@ -26,3 +26,8 @@ export enum ERROR_TYPE {
 	TRANSPORT = 'TRANSPORT',
 	RMQ = 'RMQ',
 }
+
+export enum RMQ_PROTOCOL {
+	AMQP = 'amqp',
+	AMQPS = 'amqps',
+}
