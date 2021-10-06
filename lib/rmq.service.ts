@@ -65,11 +65,12 @@ export class RMQService implements OnModuleInit, IRMQService {
 			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 				return this.createConnectionUri(connection);
 			});
-			const connectionOptions = {
+			const AMQPConnectionOptions: amqp.AmqpConnectionManagerOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
 				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
+				connectionOptions: this.options.connectionOptions ?? {}
 			};
-			this.server = amqp.connect(connectionURLs, connectionOptions);
+			this.server = amqp.connect(connectionURLs, AMQPConnectionOptions);
 
 			this.server.on(CONNECT_EVENT, (connection) => {
 				this.isConnected = true;
@@ -150,7 +151,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private createConnectionUri(connection: IRMQConnection): string {
-		let uri = `${connection.protocol || RMQ_PROTOCOL.AMQP}://${connection.login}:${connection.password}@${connection.host}`;
+		let uri = `${connection.protocol ?? RMQ_PROTOCOL.AMQP}://${connection.login}:${connection.password}@${connection.host}`;
 		if (connection.port) {
 			uri += `:${connection.port}`;
 		}
