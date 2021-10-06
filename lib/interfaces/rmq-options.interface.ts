@@ -4,6 +4,7 @@ import { RMQErrorHandler } from '../classes/rmq-error-handler.class';
 import { LoggerService } from '@nestjs/common';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Channel, Options } from 'amqplib';
+import { RMQ_PROTOCOL } from '../constants';
 
 export interface IRMQServiceOptions {
 	exchangeName: string;
@@ -33,6 +34,7 @@ export interface IRMQConnection {
 	login: string;
 	password: string;
 	host: string;
+	protocol?: RMQ_PROTOCOL,
 	port?: number;
 	vhost?: string;
 }
