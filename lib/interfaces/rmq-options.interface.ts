@@ -5,6 +5,7 @@ import { LoggerService } from '@nestjs/common';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Channel, Options } from 'amqplib';
 import { RMQ_PROTOCOL } from '../constants';
+import { ConnectionOptions } from 'tls';
 
 export interface IRMQServiceOptions {
 	exchangeName: string;
@@ -13,6 +14,19 @@ export interface IRMQServiceOptions {
 	queueArguments?: {
 		[key: string]: string;
 	};
+	connectionOptions?: ConnectionOptions & {
+		noDelay?: boolean;
+		timeout?: number;
+		keepAlive?: boolean;
+		keepAliveDelay?: number;
+		clientProperties?: any;
+		credentials?: {
+			mechanism: string;
+			username: string;
+			password: string;
+			response: () => Buffer;
+		};
+	},
 	prefetchCount?: number;
 	isGlobalPrefetchCount?: boolean;
 	isQueueDurable?: boolean;
