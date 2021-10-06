@@ -339,6 +339,43 @@ You can get all message properties that RMQ gets. Example:
 }
 ```
 
+## TSL/SSL support
+To configure certificates and learn why do you need it, [read here](https://www.rabbitmq.com/ssl.html).
+
+To use `amqps` connection:
+
+``` typescript
+RMQModule.forRoot({
+	exchangeName: 'test',
+	connections: [
+		{
+			protocol: RMQ_PROTOCOL.AMQPS, // new
+			login: 'admin',
+			password: 'admin',
+			host: 'localhost',
+		},
+	],
+	connectionOptions: {
+		cert: fs.readFileSync('clientcert.pem'),
+		key: fs.readFileSync('clientkey.pem'),
+		passphrase: 'MySecretPassword',
+		ca: [fs.readFileSync('cacert.pem')]
+	} // new
+}),
+```
+
+This is the basic example with reading files, but you can do however you want. `cert`, `key` and `ca` must be Buffers. Notice: `ca` is array. If you don't need keys, just use `RMQ_PROTOCOL.AMQPS` protocol.
+
+To use it with `pkcs12` files:
+
+``` typescript
+connectionOptions: {
+	pfx: fs.readFileSync('clientcertkey.p12'),
+	passphrase: 'MySecretPassword',
+	ca: [fs.readFileSync('cacert.pem')]
+},
+```
+
 ## Manual message Ack/Nack
 
 If you want to use your own [ack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack)/[nack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_ack) logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack/nack message that you get with `@RMQMessage`.

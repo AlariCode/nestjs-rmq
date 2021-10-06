@@ -1,5 +1,9 @@
 # Change log
 
+## 2.4.0
+
+-   Added TLS/SSL support
+
 ## 2.3.1
 
 -   Fixed import
