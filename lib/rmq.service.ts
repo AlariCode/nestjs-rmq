@@ -178,7 +178,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 						this.options.prefetchCount ?? DEFAULT_PREFETCH_COUNT,
 						this.options.isGlobalPrefetchCount ?? false
 					);
-					if (this.options.queueName) {
+					if (typeof this.options.queueName === 'string') {
 						this.listen(channel);
 					}
 					this.logConnected();
@@ -209,10 +209,13 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private async listen(channel: Channel) {
-		await channel.assertQueue(this.options.queueName, {
+		const queue = await channel.assertQueue(this.options.queueName, {
 			durable: this.options.isQueueDurable ?? true,
+			exclusive: this.options.isQueueExclusive ?? !this.options.queueName,
 			arguments: this.options.queueArguments ?? {},
 		});
+		this.options.queueName = queue.queue;
+
 		await this.bindRMQRoutes(channel);
 		await channel.consume(
 			this.options.queueName,
