@@ -170,8 +170,8 @@ export class RMQService implements OnModuleInit, IRMQService {
 						this.options.exchangeName,
 						this.options.assertExchangeType ? this.options.assertExchangeType : 'topic',
 						{
-							...this.options.exchangeOptions,
 							durable: this.options.isExchangeDurable ?? true,
+							...this.options.exchangeOptions,
 						}
 					);
 					await channel.prefetch(
@@ -211,8 +211,8 @@ export class RMQService implements OnModuleInit, IRMQService {
 	private async listen(channel: Channel) {
 		const queue = await channel.assertQueue(this.options.queueName, {
 			durable: this.options.isQueueDurable ?? true,
-			exclusive: this.options.isQueueExclusive ?? !this.options.queueName,
 			arguments: this.options.queueArguments ?? {},
+			...this.options.queueOptions
 		});
 		this.options.queueName = queue.queue;
 

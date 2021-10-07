@@ -29,8 +29,8 @@ export interface IRMQServiceOptions {
 	},
 	prefetchCount?: number;
 	isGlobalPrefetchCount?: boolean;
+	queueOptions?: Options.AssertQueue,
 	isQueueDurable?: boolean;
-	isQueueExclusive?: boolean;
 	isExchangeDurable?: boolean;
 	assertExchangeType?: Parameters<Channel['assertExchange']>[1];
 	exchangeOptions?: Options.AssertExchange;

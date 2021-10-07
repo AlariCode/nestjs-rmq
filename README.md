@@ -59,7 +59,7 @@ In forRoot() you pass connection options:
 
 Additionally, you can use optional parameters:
 
--   **queueName** (string) - Queue name which your microservice would listen and bind topics specified in '@RMQRoute' decorator to this queue. If this parameter is not specified, your microservice could send messages and listen to reply or send notifications, but it couldn't get messages or notifications from other services.
+-   **queueName** (string) - Queue name which your microservice would listen and bind topics specified in '@RMQRoute' decorator to this queue. If this parameter is not specified, your microservice could send messages and listen to reply or send notifications, but it couldn't get messages or notifications from other services. If you use empty string, RabbitMQ will generate name for you.
     Example:
 
 ```typescript
@@ -75,15 +75,16 @@ Additionally, you can use optional parameters:
 	queueName: 'my-service-queue',
 }
 ```
-
--   **prefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
--   **isGlobalPrefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
+-   **connectionOptions** (object) - Additional connection options. You can read more [here](http://www.squaremobius.net/amqp.node/).
+-   **prefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
+-   **isGlobalPrefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
+-	**queueOptions** (object) - options for created queue.
 -   **reconnectTimeInSeconds** (number) - Time in seconds before reconnection retry. Default is 5 seconds.
 -   **heartbeatIntervalInSeconds** (number) - Interval to send heartbeats to broker. Defaults to 5 seconds.
--   **queueArguments** (object) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
+-   **queueArguments** (!!! deprecated. Use queueOptions instead) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
 -   **messagesTimeout** (number) - Number of milliseconds 'post' method will wait for the response before a timeout error. Default is 30 000.
--   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
--   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
+-   **isQueueDurable** (!!! deprecated. Use queueOptions instead) - Makes created queue durable. Default is true.
+-   **isExchangeDurable** (!!! deprecated. Use exchangeOptions instead) - Makes created exchange durable. Default is true.
 -   **exchangeOptions** (Options.AssertExchange) - You can read more about exchange options [here](squaremobius.net/amqp.node/channel_api.html#channel_assertExchange).
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
 -   **logger** (LoggerService) - Your custom logger service that implements `LoggerService` interface. Compatible with Winston and other loggers.

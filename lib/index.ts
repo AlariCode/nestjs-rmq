@@ -6,7 +6,6 @@ export * from './interfaces/rmq-options.interface';
 export * from './interfaces/rmq-publish-options.interface';
 export * from './interfaces/rmq-service.interface';
 export * from './decorators/rmq-route.decorator';
-export * from './decorators/rmq-controller.decorator';
 export * from './decorators/rmq-pipe.decorator';
 export * from './decorators/validate.decorator';
 export * from './decorators/rmq-message.decorator';

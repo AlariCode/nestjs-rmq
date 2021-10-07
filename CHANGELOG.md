@@ -1,5 +1,11 @@
 # Change log
 
+## 2.5.0
+
+-   Added support for random queue name and additional queueOprions.
+-	Added deprecation warning.
+-	Removed deprecated @RMQController
+
 ## 2.4.0
 
 -   Added TLS/SSL support
