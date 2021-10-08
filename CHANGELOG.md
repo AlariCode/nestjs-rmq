@@ -1,5 +1,9 @@
 # Change log
 
+## 2.5.1
+
+-   Updated RQMColorLogger performance and changed debug message content.
+
 ## 2.5.0
 
 -   Added support for random queue name and additional queueOprions.

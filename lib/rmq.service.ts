@@ -111,7 +111,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 				}
 				const { content } = msg;
 				if (content.toString()) {
-					this.logger.debug(`Received ▼ [${topic}] ${content.toString()}`);
+					this.logger.debug(content, `Received ▼,${topic}`);
 					resolve(JSON.parse(content.toString()));
 				} else {
 					reject(new RMQError(ERROR_NONE_RPC, ERROR_TYPE.TRANSPORT));
@@ -124,7 +124,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 				correlationId,
 				...options,
 			});
-			this.logger.debug(`Sent ▲ [${topic}] ${JSON.stringify(message)}`);
+			this.logger.debug(message, `Sent ▲,${topic}`);
 		});
 	}
 
@@ -135,7 +135,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 			timestamp: new Date().getTime(),
 			...options,
 		});
-		this.logger.debug(`[${topic}] ${JSON.stringify(message)}`);
+		this.logger.debug(message, `Notify ▲,${topic}`);
 	}
 
 	public healthCheck() {
@@ -220,7 +220,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
-				this.logger.debug(`Received ▼ [${msg.fields.routingKey}] ${msg.content}`);
+				this.logger.debug(msg.content, `Received ▼,${msg.fields.routingKey}`);
 				const route = this.getRouteByTopic(msg.fields.routingKey);
 				if (route) {
 					msg = await this.useMiddleware(msg);
@@ -267,7 +267,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 				...this.errorService.buildError(error),
 			},
 		});
-		this.logger.debug(`Sent ▲ [${msg.fields.routingKey}] ${JSON.stringify(res)}`);
+		this.logger.debug(res, `Sent ▲,${msg.fields.routingKey}`);
 	}
 
 	private getRouteByTopic(topic: string): string {
