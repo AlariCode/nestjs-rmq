@@ -26,10 +26,10 @@ export interface IRMQServiceOptions {
 			password: string;
 			response: () => Buffer;
 		};
-	},
+	};
 	prefetchCount?: number;
 	isGlobalPrefetchCount?: boolean;
-	queueOptions?: Options.AssertQueue,
+	queueOptions?: Options.AssertQueue;
 	isQueueDurable?: boolean;
 	isExchangeDurable?: boolean;
 	assertExchangeType?: Parameters<Channel['assertExchange']>[1];
@@ -49,7 +49,7 @@ export interface IRMQConnection {
 	login: string;
 	password: string;
 	host: string;
-	protocol?: RMQ_PROTOCOL,
+	protocol?: RMQ_PROTOCOL;
 	port?: number;
 	vhost?: string;
 }

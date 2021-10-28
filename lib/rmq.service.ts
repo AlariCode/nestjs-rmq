@@ -13,7 +13,10 @@ import {
 	ERROR_TYPE,
 	REPLY_QUEUE,
 	DEFAULT_HEARTBEAT_TIME,
-	RMQ_MODULE_OPTIONS, INITIALIZATION_STEP_DELAY, ERROR_NO_QUEUE, RMQ_PROTOCOL,
+	RMQ_MODULE_OPTIONS,
+	INITIALIZATION_STEP_DELAY,
+	ERROR_NO_QUEUE,
+	RMQ_PROTOCOL,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -42,8 +45,8 @@ export class RMQService implements OnModuleInit, IRMQService {
 	private routes: string[];
 	private logger: LoggerService;
 
-	private isConnected: boolean = false;
-	private isInitialized: boolean = false;
+	private isConnected = false;
+	private isInitialized = false;
 
 	constructor(
 		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
@@ -68,7 +71,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 			const AMQPConnectionOptions: amqp.AmqpConnectionManagerOptions = {
 				reconnectTimeInSeconds: this.options.reconnectTimeInSeconds ?? DEFAULT_RECONNECT_TIME,
 				heartbeatIntervalInSeconds: this.options.heartbeatIntervalInSeconds ?? DEFAULT_HEARTBEAT_TIME,
-				connectionOptions: this.options.connectionOptions ?? {}
+				connectionOptions: this.options.connectionOptions ?? {},
 			};
 			this.server = amqp.connect(connectionURLs, AMQPConnectionOptions);
 
@@ -151,7 +154,9 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private createConnectionUri(connection: IRMQConnection): string {
-		let uri = `${connection.protocol ?? RMQ_PROTOCOL.AMQP}://${connection.login}:${connection.password}@${connection.host}`;
+		let uri = `${connection.protocol ?? RMQ_PROTOCOL.AMQP}://${connection.login}:${connection.password}@${
+			connection.host
+		}`;
 		if (connection.port) {
 			uri += `:${connection.port}`;
 		}
@@ -212,7 +217,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 		const queue = await channel.assertQueue(this.options.queueName, {
 			durable: this.options.isQueueDurable ?? true,
 			arguments: this.options.queueArguments ?? {},
-			...this.options.queueOptions
+			...this.options.queueOptions,
 		});
 		this.options.queueName = queue.queue;
 
@@ -275,7 +280,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 			if (route === topic) {
 				return true;
 			}
-			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\.?)+') + '$';
+			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+.?)+') + '$';
 			return topic.search(regexString) !== -1;
 		});
 	}
@@ -304,7 +309,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 		if (this.isInitialized) {
 			return;
 		}
-		await new Promise<void>(resolve => {
+		await new Promise<void>((resolve) => {
 			setTimeout(() => {
 				resolve();
 			}, INITIALIZATION_STEP_DELAY);

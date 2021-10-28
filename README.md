@@ -480,19 +480,19 @@ customMessageFactory({ num }: CustomMessageFactoryContracts.Request, appId: stri
 
 ## Validating data
 
-NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
+NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `RMQValidate`:
 
 ```typescript
-import { RMQRoute, Validate } from 'nestjs-rmq';
+import { RMQRoute, RMQValidate } from 'nestjs-rmq';
 
+@RMQValidate()
 @RMQRoute('my.rpc')
-@Validate()
 myMethod(data: myClass): number {
 	// ...
 }
 ```
 
-Add it after `@RMQRoute()`. Where `myClass` is data class with validation decorators:
+Where `myClass` is data class with validation decorators:
 
 ```typescript
 import { IsString, MinLength, IsNumber } from 'class-validator';
@@ -508,6 +508,36 @@ export class myClass {
 ```
 
 If your input data will be invalid, the library will send back an error without even entering your method. This will prevent you from manually validating your data inside route. You can check all available validators [here](https://github.com/typestack/class-validator).
+
+## Transforming data
+
+NestJS-rmq uses [class-transformer](https://github.com/typestack/class-transformer) to transform incoming data. To use it, decorate your route method with `RMQTransform`:
+
+```typescript
+import { RMQRoute, RMQTransform } from 'nestjs-rmq';
+
+@RMQTransform()
+@RMQValidate()
+@RMQRoute('my.rpc')
+myMethod(data: myClass): number {
+	// ...
+}
+```
+
+Where `myClass` is data class with transformation decorators:
+
+```typescript
+import { Type } from 'class-transformer';
+import { IsDate } from 'class-validator';
+
+export class myClass {
+	@IsDate()
+	@Type(() => Date)
+	date: Date;
+}
+```
+
+After this you can use `data.date` in your controller as Date object and not a string. You can check class-validator docs [here](https://github.com/typestack/class-transformer). You can use transformation and validation at the same time - first transformation will be applied and then validation.
 
 ## Using pipes
 

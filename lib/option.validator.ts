@@ -12,6 +12,8 @@ export function validateOptions(options: IRMQServiceOptions, logger: LoggerServi
 		logger.warn('queueArguments is deprecated and will be removed in future versions. Use queueOptions instead.');
 	}
 	if (options.isExchangeDurable) {
-		logger.warn('isExchangeDurable is deprecated and will be removed in future versions. Use exchangeOptions instead.');
+		logger.warn(
+			'isExchangeDurable is deprecated and will be removed in future versions. Use exchangeOptions instead.'
+		);
 	}
 }

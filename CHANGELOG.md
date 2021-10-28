@@ -1,5 +1,12 @@
 # Change log
 
+## 2.6.0
+
+-   Updated dependencies
+-	Migrated tslint to eslint
+-	Added @RMQTransform() decorator to transform incomming message
+-	Changed @Validate() decorator to @RMQValidate(). @Validate() will be depricated.
+
 ## 2.5.1
 
 -   Updated RQMColorLogger performance and changed debug message content.

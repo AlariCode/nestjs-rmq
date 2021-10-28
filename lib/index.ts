@@ -8,6 +8,7 @@ export * from './interfaces/rmq-service.interface';
 export * from './decorators/rmq-route.decorator';
 export * from './decorators/rmq-pipe.decorator';
 export * from './decorators/validate.decorator';
+export * from './decorators/transform.decorator';
 export * from './decorators/rmq-message.decorator';
 export * from './classes/rmq-pipe.class';
 export * from './classes/rmq-intercepter.class';

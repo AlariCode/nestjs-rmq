@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import { IsNumber, IsString } from 'class-validator';
 
 export namespace SumContracts {
@@ -111,5 +112,17 @@ export namespace PatternHashContracts {
 	}
 	export class Response {
 		num: number;
+	}
+}
+
+export namespace TransformContracts {
+	export const topic: string = 'transform.rpc';
+	export class Request {
+		@Type(() => Date)
+		date: Date;
+	}
+	export class Response {
+		res: number;
+		type: string;
 	}
 }
