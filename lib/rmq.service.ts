@@ -232,6 +232,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 					requestEmitter.emit(route, msg);
 				} else {
 					this.reply('', msg, new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT));
+					this.nack(msg);
 				}
 			},
 			{ noAck: false }
