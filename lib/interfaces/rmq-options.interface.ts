@@ -43,6 +43,7 @@ export interface IRMQServiceOptions {
 	intercepters?: typeof RMQIntercepterClass[];
 	errorHandler?: typeof RMQErrorHandler;
 	serviceName?: string;
+	autoBindingRoutes?: boolean;
 }
 
 export interface IRMQConnection {
