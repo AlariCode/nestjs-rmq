@@ -1,5 +1,9 @@
 # Change log
 
+## 2.6.2
+
+-   Update dependencies
+
 ## 2.6.1
 
 -   Added nack for ERROR_NO_ROUTE
