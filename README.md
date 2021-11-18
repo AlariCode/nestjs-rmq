@@ -91,6 +91,8 @@ Additionally, you can use optional parameters:
 -   **middleware** (array) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
 -   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass class that extends `RMQErrorHandler`.
 -   **serviceName** (string) - service name for debugging.
+-   **autoBindingRoutes** (boolean) - set false you want to manage route binding manualy. Default to `true`.
+
 
 ```typescript
 class LogMiddleware extends RMQPipeClass {

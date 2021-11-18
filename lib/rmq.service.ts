@@ -222,8 +222,9 @@ export class RMQService implements OnModuleInit, IRMQService {
 		this.options.queueName = queue.queue;
 		this.routes = this.metadataAccessor.getAllRMQPaths();
 
-		if (this.options.autoBindingRoutes ?? true)
+		if (this.options.autoBindingRoutes ?? true) {
 			await this.bindRMQRoutes(channel);
+		}
 
 		await channel.consume(
 			this.options.queueName,

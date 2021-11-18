@@ -1,5 +1,9 @@
 # Change log
 
+## 2.7.0
+
+-   Added autoBindingRoutes optiom
+
 ## 2.6.2
 
 -   Update dependencies
