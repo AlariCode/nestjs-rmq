@@ -220,8 +220,11 @@ export class RMQService implements OnModuleInit, IRMQService {
 			...this.options.queueOptions,
 		});
 		this.options.queueName = queue.queue;
+		this.routes = this.metadataAccessor.getAllRMQPaths();
 
-		await this.bindRMQRoutes(channel);
+		if (this.options.autoBindingRoutes ?? true)
+			await this.bindRMQRoutes(channel);
+
 		await channel.consume(
 			this.options.queueName,
 			async (msg: Message) => {
@@ -240,7 +243,6 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	private async bindRMQRoutes(channel: Channel): Promise<void> {
-		this.routes = this.metadataAccessor.getAllRMQPaths();
 		if (this.routes.length > 0) {
 			this.routes.map(async (r) => {
 				this.logger.log(`Mapped ${r}`, 'RMQRoute');
