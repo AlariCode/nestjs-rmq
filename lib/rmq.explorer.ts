@@ -30,11 +30,17 @@ export class RMQExplorer implements OnModuleInit {
 			...this.discoveryService.getControllers(),
 			...this.discoveryService.getProviders(),
 		];
-		instanceWrappers.forEach((wrapper: InstanceWrapper) => {
+		
+		instanceWrappers.forEach((wrapper: InstanceWrapper, i: number) => {
 			const { instance } = wrapper;
 			if (!instance || !Object.getPrototypeOf(instance)) {
 				return;
 			}
+			
+			if (instanceWrappers.findIndex((w) => w.instance === instance) !== i) {
+				return;
+			}
+
 			this.metadataScanner.scanFromPrototype(
 				instance,
 				Object.getPrototypeOf(instance),
