@@ -1,8 +1,13 @@
 # Change log
 
+
+## 2.7.1
+
+-   Double ACK fix, when a provider is exported multiple times (thx @falahati)
+
 ## 2.7.0
 
--   Added autoBindingRoutes optiom
+-   Added autoBindingRoutes option
 
 ## 2.6.2
 
