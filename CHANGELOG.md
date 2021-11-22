@@ -1,5 +1,38 @@
 # Change log
 
+## 2.7.0
+
+-   Added autoBindingRoutes optiom
+
+## 2.6.2
+
+-   Update dependencies
+
+## 2.6.1
+
+-   Added nack for ERROR_NO_ROUTE
+
+## 2.6.0
+
+-   Updated dependencies
+-	Migrated tslint to eslint
+-	Added @RMQTransform() decorator to transform incomming message
+-	Changed @Validate() decorator to @RMQValidate(). @Validate() will be depricated.
+
+## 2.5.1
+
+-   Updated RQMColorLogger performance and changed debug message content.
+
+## 2.5.0
+
+-   Added support for random queue name and additional queueOprions.
+-	Added deprecation warning.
+-	Removed deprecated @RMQController
+
+## 2.4.0
+
+-   Added TLS/SSL support
+
 ## 2.3.1
 
 -   Fixed import

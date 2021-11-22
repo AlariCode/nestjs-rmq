@@ -11,6 +11,7 @@ import {
 	PatternStarContracts,
 	SumContracts,
 	TimeOutContracts,
+	TransformContracts,
 } from '../contracts/mock.contracts';
 
 @Controller()
@@ -76,5 +77,9 @@ export class ApiController {
 
 	async hash(num: number): Promise<PatternHashContracts.Response> {
 		return this.rmq.send<PatternHashContracts.Request, PatternHashContracts.Response>('this.is.hash', { num });
+	}
+
+	async tarnsform(date: Date): Promise<TransformContracts.Response> {
+		return this.rmq.send<TransformContracts.Request, TransformContracts.Response>(TransformContracts.topic, { date });
 	}
 }

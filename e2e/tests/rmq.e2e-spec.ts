@@ -69,6 +69,11 @@ describe('RMQe2e', () => {
 			const { debugString } = await apiController.debug();
 			expect(debugString).toContain('"message":{"prop1":[1],"prop2":"Buffer - length 11"}');
 		});
+		it('request transform', async () => {
+			const { res, type } = await apiController.tarnsform(new Date('01-01-2021'));
+			expect(res).toBe(2022);
+			expect(type).toBe('object');
+		});
 		it('request validation failed', async () => {
 			try {
 				await apiController.sumFailed(['a', 'b', 'c']);

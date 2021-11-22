@@ -11,7 +11,7 @@ import { RMQTestService } from './rmq-test.service';
 @Global()
 @Module({
 	imports: [DiscoveryModule],
-	providers: [RMQMetadataAccessor, RMQExplorer, RmqErrorService]
+	providers: [RMQMetadataAccessor, RMQExplorer, RmqErrorService],
 })
 export class RMQModule {
 	static forRoot(options: IRMQServiceOptions): DynamicModule {
@@ -35,10 +35,13 @@ export class RMQModule {
 	static forTest(options: Partial<IRMQServiceOptions>) {
 		return {
 			module: RMQModule,
-			providers: [{
-				provide: RMQService,
-				useClass: RMQTestService
-			}, { provide: RMQ_MODULE_OPTIONS, useValue: options }],
+			providers: [
+				{
+					provide: RMQService,
+					useClass: RMQTestService,
+				},
+				{ provide: RMQ_MODULE_OPTIONS, useValue: options },
+			],
 			exports: [RMQService],
 		};
 	}

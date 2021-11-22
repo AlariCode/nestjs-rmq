@@ -59,7 +59,7 @@ In forRoot() you pass connection options:
 
 Additionally, you can use optional parameters:
 
--   **queueName** (string) - Queue name which your microservice would listen and bind topics specified in '@RMQRoute' decorator to this queue. If this parameter is not specified, your microservice could send messages and listen to reply or send notifications, but it couldn't get messages or notifications from other services.
+-   **queueName** (string) - Queue name which your microservice would listen and bind topics specified in '@RMQRoute' decorator to this queue. If this parameter is not specified, your microservice could send messages and listen to reply or send notifications, but it couldn't get messages or notifications from other services. If you use empty string, RabbitMQ will generate name for you.
     Example:
 
 ```typescript
@@ -75,21 +75,24 @@ Additionally, you can use optional parameters:
 	queueName: 'my-service-queue',
 }
 ```
-
--   **prefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
--   **isGlobalPrefetchCount** (boolean) - You can read more [here](https://github.com/postwait/node-amqp).
+-   **connectionOptions** (object) - Additional connection options. You can read more [here](http://www.squaremobius.net/amqp.node/).
+-   **prefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
+-   **isGlobalPrefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
+-	**queueOptions** (object) - options for created queue.
 -   **reconnectTimeInSeconds** (number) - Time in seconds before reconnection retry. Default is 5 seconds.
 -   **heartbeatIntervalInSeconds** (number) - Interval to send heartbeats to broker. Defaults to 5 seconds.
--   **queueArguments** (object) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
+-   **queueArguments** (!!! deprecated. Use queueOptions instead) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
 -   **messagesTimeout** (number) - Number of milliseconds 'post' method will wait for the response before a timeout error. Default is 30 000.
--   **isQueueDurable** (boolean) - Makes created queue durable. Default is true.
--   **isExchangeDurable** (boolean) - Makes created exchange durable. Default is true.
+-   **isQueueDurable** (!!! deprecated. Use queueOptions instead) - Makes created queue durable. Default is true.
+-   **isExchangeDurable** (!!! deprecated. Use exchangeOptions instead) - Makes created exchange durable. Default is true.
 -   **exchangeOptions** (Options.AssertExchange) - You can read more about exchange options [here](squaremobius.net/amqp.node/channel_api.html#channel_assertExchange).
 -   **logMessages** (boolean) - Enable printing all sent and recieved messages in console with its route and content. Default is false.
 -   **logger** (LoggerService) - Your custom logger service that implements `LoggerService` interface. Compatible with Winston and other loggers.
 -   **middleware** (array) - Array of middleware functions that extends `RMQPipeClass` with one method `transform`. They will be triggered right after recieving message, before pipes and controller method. Trigger order is equal to array order.
 -   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass class that extends `RMQErrorHandler`.
 -   **serviceName** (string) - service name for debugging.
+-   **autoBindingRoutes** (boolean) - set false you want to manage route binding manualy. Default to `true`.
+
 
 ```typescript
 class LogMiddleware extends RMQPipeClass {
@@ -339,6 +342,43 @@ You can get all message properties that RMQ gets. Example:
 }
 ```
 
+## TSL/SSL support
+To configure certificates and learn why do you need it, [read here](https://www.rabbitmq.com/ssl.html).
+
+To use `amqps` connection:
+
+``` typescript
+RMQModule.forRoot({
+	exchangeName: 'test',
+	connections: [
+		{
+			protocol: RMQ_PROTOCOL.AMQPS, // new
+			login: 'admin',
+			password: 'admin',
+			host: 'localhost',
+		},
+	],
+	connectionOptions: {
+		cert: fs.readFileSync('clientcert.pem'),
+		key: fs.readFileSync('clientkey.pem'),
+		passphrase: 'MySecretPassword',
+		ca: [fs.readFileSync('cacert.pem')]
+	} // new
+}),
+```
+
+This is the basic example with reading files, but you can do however you want. `cert`, `key` and `ca` must be Buffers. Notice: `ca` is array. If you don't need keys, just use `RMQ_PROTOCOL.AMQPS` protocol.
+
+To use it with `pkcs12` files:
+
+``` typescript
+connectionOptions: {
+	pfx: fs.readFileSync('clientcertkey.p12'),
+	passphrase: 'MySecretPassword',
+	ca: [fs.readFileSync('cacert.pem')]
+},
+```
+
 ## Manual message Ack/Nack
 
 If you want to use your own [ack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_nack)/[nack](https://www.squaremobius.net/amqp.node/channel_api.html#channel_ack) logic, you can set manual acknowledgement to `@RMQRoute`. Than in any place you have to manually ack/nack message that you get with `@RMQMessage`.
@@ -442,19 +482,19 @@ customMessageFactory({ num }: CustomMessageFactoryContracts.Request, appId: stri
 
 ## Validating data
 
-NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `Validate`:
+NestJS-rmq uses [class-validator](https://github.com/typestack/class-validator) to validate incoming data. To use it, decorate your route method with `RMQValidate`:
 
 ```typescript
-import { RMQRoute, Validate } from 'nestjs-rmq';
+import { RMQRoute, RMQValidate } from 'nestjs-rmq';
 
+@RMQValidate()
 @RMQRoute('my.rpc')
-@Validate()
 myMethod(data: myClass): number {
 	// ...
 }
 ```
 
-Add it after `@RMQRoute()`. Where `myClass` is data class with validation decorators:
+Where `myClass` is data class with validation decorators:
 
 ```typescript
 import { IsString, MinLength, IsNumber } from 'class-validator';
@@ -470,6 +510,36 @@ export class myClass {
 ```
 
 If your input data will be invalid, the library will send back an error without even entering your method. This will prevent you from manually validating your data inside route. You can check all available validators [here](https://github.com/typestack/class-validator).
+
+## Transforming data
+
+NestJS-rmq uses [class-transformer](https://github.com/typestack/class-transformer) to transform incoming data. To use it, decorate your route method with `RMQTransform`:
+
+```typescript
+import { RMQRoute, RMQTransform } from 'nestjs-rmq';
+
+@RMQTransform()
+@RMQValidate()
+@RMQRoute('my.rpc')
+myMethod(data: myClass): number {
+	// ...
+}
+```
+
+Where `myClass` is data class with transformation decorators:
+
+```typescript
+import { Type } from 'class-transformer';
+import { IsDate } from 'class-validator';
+
+export class myClass {
+	@IsDate()
+	@Type(() => Date)
+	date: Date;
+}
+```
+
+After this you can use `data.date` in your controller as Date object and not a string. You can check class-validator docs [here](https://github.com/typestack/class-transformer). You can use transformation and validation at the same time - first transformation will be applied and then validation.
 
 ## Using pipes
 

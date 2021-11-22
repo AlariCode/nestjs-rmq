@@ -14,15 +14,14 @@ export class RQMColorLogger implements LoggerService {
 		Logger.error(message, trace, context);
 	}
 	debug(message: any, context?: string): any {
-		if(!this.logMessages) {
+		if (!this.logMessages) {
 			return;
 		}
-		const split = new RegExp(/(.*?)(\[.*?])(.*)/g).exec(message);
-		if(split[3]) {
-			Logger.log(`${blueBright(split[1])} ${yellow(split[2])} ${white(split[3])}`);
-		} else {
-			Logger.log(message, context);
-		}
+		const msg = JSON.stringify(message);
+		const action = context.split(',')[0];
+		const topic = context.split(',')[1];
+		Logger.log(`${blueBright(action)} [${yellow(topic)}] ${white(msg)}`);
+		console.warn(`${blueBright(action)} [${yellow(topic)}] ${white(msg)}`);
 	}
 	warn(message: any, context?: string): any {
 		Logger.warn(message, context);

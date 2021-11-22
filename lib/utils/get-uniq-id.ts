@@ -5,4 +5,4 @@ export const getUniqId = (): string => {
 			.substring(1);
 	}
 	return `${s4()}${s4()}-${s4()}-${s4()}-${s4()}-${s4()}${s4()}${s4()}`;
-}
+};

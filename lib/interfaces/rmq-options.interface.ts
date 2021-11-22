@@ -4,6 +4,8 @@ import { RMQErrorHandler } from '../classes/rmq-error-handler.class';
 import { LoggerService } from '@nestjs/common';
 import { ModuleMetadata } from '@nestjs/common/interfaces';
 import { Channel, Options } from 'amqplib';
+import { RMQ_PROTOCOL } from '../constants';
+import { ConnectionOptions } from 'tls';
 
 export interface IRMQServiceOptions {
 	exchangeName: string;
@@ -12,8 +14,22 @@ export interface IRMQServiceOptions {
 	queueArguments?: {
 		[key: string]: string;
 	};
+	connectionOptions?: ConnectionOptions & {
+		noDelay?: boolean;
+		timeout?: number;
+		keepAlive?: boolean;
+		keepAliveDelay?: number;
+		clientProperties?: any;
+		credentials?: {
+			mechanism: string;
+			username: string;
+			password: string;
+			response: () => Buffer;
+		};
+	};
 	prefetchCount?: number;
 	isGlobalPrefetchCount?: boolean;
+	queueOptions?: Options.AssertQueue;
 	isQueueDurable?: boolean;
 	isExchangeDurable?: boolean;
 	assertExchangeType?: Parameters<Channel['assertExchange']>[1];
@@ -27,12 +43,14 @@ export interface IRMQServiceOptions {
 	intercepters?: typeof RMQIntercepterClass[];
 	errorHandler?: typeof RMQErrorHandler;
 	serviceName?: string;
+	autoBindingRoutes?: boolean;
 }
 
 export interface IRMQConnection {
 	login: string;
 	password: string;
 	host: string;
+	protocol?: RMQ_PROTOCOL;
 	port?: number;
 	vhost?: string;
 }

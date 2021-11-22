@@ -14,12 +14,15 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	private options: IRMQServiceOptions;
 	private routes: string[];
 	private logger: LoggerService;
-	private isInitialized: boolean = false;
-	private replyStack = new Map<string, { resolve: Function, reject: Function }>();
+	private isInitialized = false;
+	private replyStack = new Map<string, { resolve: Function; reject: Function }>();
 	private mockStack = new Map<string, any>();
 	private mockErrorStack = new Map<string, any>();
 
-	constructor(@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions, private readonly metadataAccessor: RMQMetadataAccessor) {
+	constructor(
+		@Inject(RMQ_MODULE_OPTIONS) options: IRMQServiceOptions,
+		private readonly metadataAccessor: RMQMetadataAccessor
+	) {
 		this.options = options;
 		this.logger = options.logger ? options.logger : new RQMColorLogger(this.options.logMessages);
 		validateOptions(this.options, this.logger);
@@ -63,9 +66,9 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 					priority: 0,
 					correlationId,
 					expiration: 0,
-					replyTo: 'mock'
-				}
-			}
+					replyTo: 'mock',
+				},
+			};
 			const route = this.getRouteByTopic(path);
 			if (route) {
 				msg = await this.useMiddleware(msg);
@@ -74,7 +77,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 			} else {
 				throw new RMQError(ERROR_NO_ROUTE, ERROR_TYPE.TRANSPORT);
 			}
-		})
+		});
 	}
 
 	public async init(): Promise<void> {
@@ -83,11 +86,9 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 		this.attachEmitters();
 	}
 
-	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {
-	}
+	public ack(...params: Parameters<Channel['ack']>): ReturnType<Channel['ack']> {}
 
-	public nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {
-	}
+	public nack(...params: Parameters<Channel['nack']>): ReturnType<Channel['nack']> {}
 
 	public async send<IMessage, IReply>(topic: string, message: IMessage, options?: IPublishOptions): Promise<IReply> {
 		const error = this.mockErrorStack.get(topic);
@@ -97,9 +98,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 		return this.mockStack.get(topic) as IReply;
 	}
 
-	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {
-
-	}
+	public async notify<IMessage>(topic: string, message: IMessage, options?: IPublishOptions): Promise<void> {}
 
 	public healthCheck() {
 		return true;
@@ -159,7 +158,7 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 			if (route === topic) {
 				return true;
 			}
-			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+\.?)+') + '$';
+			const regexString = '^' + route.replace(/\*/g, '([^.]+)').replace(/#/g, '([^.]+.?)+') + '$';
 			return topic.search(regexString) !== -1;
 		});
 	}
@@ -167,5 +166,4 @@ export class RMQTestService implements OnModuleInit, IRMQService {
 	private logConnected() {
 		this.logger.log(CONNECTED_MESSAGE, 'RMQModule');
 	}
-
 }

@@ -9,7 +9,6 @@ import { ConfigService } from '../mocks/config.service';
 describe('RMQe2e', () => {
 	let api: INestApplication;
 	let apiController: ApiController;
-	let microserviceController: MicroserviceController;
 	let rmqService: RMQService;
 
 	beforeAll(async () => {
@@ -30,7 +29,7 @@ describe('RMQe2e', () => {
 								},
 							],
 							serviceName: 'test-service',
-							queueName: 'test',
+							queueName: 'test'
 						};
 					},
 				}),
@@ -41,10 +40,7 @@ describe('RMQe2e', () => {
 		await api.init();
 
 		apiController = apiModule.get<ApiController>(ApiController);
-		microserviceController = apiModule.get<MicroserviceController>(MicroserviceController);
 		rmqService = apiModule.get<RMQService>(RMQService);
-		console.warn = jest.fn();
-		console.log = jest.fn();
 	});
 
 	describe('rpc', () => {
