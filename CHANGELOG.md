@@ -1,5 +1,8 @@
 # Change log
 
+## 2.7.2
+
+-   Nack message if no ROUTE
 
 ## 2.7.1
 
