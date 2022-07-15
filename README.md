@@ -11,16 +11,16 @@
 
 This library will take care of RPC requests and messaging between microservices. It is easy to bind to our existing controllers to RMQ routes. This version is only for NestJS.
 
-**Updated for NestJS 8!**
+**Updated for NestJS 9!**
 
 ## Why use this over RabbitMQ transport in NestJS docs?
 
-- Support for RMQ queue patterns with * and #.
-- Using exchanges with topic bindings rather the direct queue sending.
-- Additional `forTest()` method for emulating messages in unit or e2e tests without needing of RabbitMQ instance.
-- Additional decorators for getting info out of messages.
-- Support for class-validator decorators.
-- Real production usage with more than 100 microservices.
+-   Support for RMQ queue patterns with \* and #.
+-   Using exchanges with topic bindings rather the direct queue sending.
+-   Additional `forTest()` method for emulating messages in unit or e2e tests without needing of RabbitMQ instance.
+-   Additional decorators for getting info out of messages.
+-   Support for class-validator decorators.
+-   Real production usage with more than 100 microservices.
 
 ## Start
 
@@ -75,10 +75,11 @@ Additionally, you can use optional parameters:
 	queueName: 'my-service-queue',
 }
 ```
+
 -   **connectionOptions** (object) - Additional connection options. You can read more [here](http://www.squaremobius.net/amqp.node/).
 -   **prefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
 -   **isGlobalPrefetchCount** (boolean) - You can read more [here](http://www.squaremobius.net/amqp.node/).
--	**queueOptions** (object) - options for created queue.
+-   **queueOptions** (object) - options for created queue.
 -   **reconnectTimeInSeconds** (number) - Time in seconds before reconnection retry. Default is 5 seconds.
 -   **heartbeatIntervalInSeconds** (number) - Interval to send heartbeats to broker. Defaults to 5 seconds.
 -   **queueArguments** (!!! deprecated. Use queueOptions instead) - You can read more about queue parameters [here](https://www.rabbitmq.com/parameters.html).
@@ -92,7 +93,6 @@ Additionally, you can use optional parameters:
 -   **errorHandler** (class) - custom error handler for dealing with errors from replies, use `errorHandler` in module options and pass class that extends `RMQErrorHandler`.
 -   **serviceName** (string) - service name for debugging.
 -   **autoBindingRoutes** (boolean) - set false you want to manage route binding manualy. Default to `true`.
-
 
 ```typescript
 class LogMiddleware extends RMQPipeClass {
@@ -278,12 +278,14 @@ myMethod(numbers: number[]): number {
 ## Message patterns
 
 With exchange type `topic` you can use message patterns to subscribe to messages that corresponds to that pattern. You can use special symbols:
-- `*` - (star) can substitute for exactly one word.
-- `#`- (hash) can substitute for zero or more words.
+
+-   `*` - (star) can substitute for exactly one word.
+-   `#`- (hash) can substitute for zero or more words.
 
 For example:
-- Pattern `*.*.rpc` will match `my.own.rpc` or `any.other.rpc` and will not match `this.is.cool.rpc` or `my.rpc`.
-- Pattern `compute.#` will match `compute.this.equation.rpc` and will not `do.compute.anything`.
+
+-   Pattern `*.*.rpc` will match `my.own.rpc` or `any.other.rpc` and will not match `this.is.cool.rpc` or `my.rpc`.
+-   Pattern `compute.#` will match `compute.this.equation.rpc` and will not `do.compute.anything`.
 
 To subscribe to pattern, use it as route:
 
@@ -343,11 +345,12 @@ You can get all message properties that RMQ gets. Example:
 ```
 
 ## TSL/SSL support
+
 To configure certificates and learn why do you need it, [read here](https://www.rabbitmq.com/ssl.html).
 
 To use `amqps` connection:
 
-``` typescript
+```typescript
 RMQModule.forRoot({
 	exchangeName: 'test',
 	connections: [
@@ -371,7 +374,7 @@ This is the basic example with reading files, but you can do however you want. `
 
 To use it with `pkcs12` files:
 
-``` typescript
+```typescript
 connectionOptions: {
 	pfx: fs.readFileSync('clientcertkey.p12'),
 	passphrase: 'MySecretPassword',
@@ -607,31 +610,29 @@ If you want to close connection, for example, if you are using RMQ in testing to
 RMQ library supports using RMQ module in your test suites without needing RabbitMQ instance. To use library in tests, use `forTest` method in module.
 
 ```typescript
-	import { RMQTestService } from 'nestjs-rmq';
+import { RMQTestService } from 'nestjs-rmq';
 
-	let rmqService: RMQTestService;
+let rmqService: RMQTestService;
 
-	beforeAll(async () => {
-		const apiModule = await Test.createTestingModule({
-			imports: [
-				RMQModule.forTest({})
-			],
-			controllers: [MicroserviceController],
-		}).compile();
-		api = apiModule.createNestApplication();
-		await api.init();
+beforeAll(async () => {
+	const apiModule = await Test.createTestingModule({
+		imports: [RMQModule.forTest({})],
+		controllers: [MicroserviceController],
+	}).compile();
+	api = apiModule.createNestApplication();
+	await api.init();
 
-		rmqService = apiModule.get(RMQService);
-	});
+	rmqService = apiModule.get(RMQService);
+});
 ```
 
 You can pass any options you pass in normal `forRoot` (except `errorHandler`).
 
 From module, you will get `rmqService` which is similar to normal service, with two additional methods:
 
-- `triggerRoute` - trigger your RMQRoute, simulating incoming message.
-- `mockReply` - mock reply if you are using `send` method.
-- `mockError` - mock error if you are using `send` method.
+-   `triggerRoute` - trigger your RMQRoute, simulating incoming message.
+-   `mockReply` - mock reply if you are using `send` method.
+-   `mockError` - mock error if you are using `send` method.
 
 ### triggerRoute
 
@@ -641,8 +642,8 @@ Emulates message received buy your RMQRoute.
 const { result } = await rmqService.triggerRoute<Request, Response>(topic, data);
 ```
 
-- `topic` - topic, that you want to trigger (pattern supported).
-- `data` - data to send in your method.
+-   `topic` - topic, that you want to trigger (pattern supported).
+-   `data` - data to send in your method.
 
 ### mockReply
 
@@ -652,8 +653,8 @@ If your service needs to send data to other microservice, you can emulate its re
 rmqService.mockReply(topic, res);
 ```
 
-- `topic` - all messages sent to this topic will be mocked.
-- `res` - mocked response data.
+-   `topic` - all messages sent to this topic will be mocked.
+-   `res` - mocked response data.
 
 After this, all `rmqService.send(topic, { ... })` calls will return `res` data.
 
@@ -665,8 +666,8 @@ If your service needs to send data to other microservice, you can emulate its er
 rmqService.mockError(topic, error);
 ```
 
-- `topic` - all messages sent to this topic will be mocked.
-- `error` - error that `send` method will throw.
+-   `topic` - all messages sent to this topic will be mocked.
+-   `error` - error that `send` method will throw.
 
 After this, all `rmqService.send(topic, { ... })` calls will throw `error`.
 
@@ -686,13 +687,11 @@ npm run test:e2e
 
 ![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/tests.png)
 
-
 For unit tests just run:
 
 ```
 npm run test
 ```
-
 
 ### Migrating from version 1
 

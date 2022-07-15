@@ -1,5 +1,9 @@
 # Change log
 
+## 2.8.0
+
+-   Updated to nestjs 9
+
 ## 2.7.2
 
 -   Nack message if no ROUTE
@@ -23,9 +27,9 @@
 ## 2.6.0
 
 -   Updated dependencies
--	Migrated tslint to eslint
--	Added @RMQTransform() decorator to transform incomming message
--	Changed @Validate() decorator to @RMQValidate(). @Validate() will be depricated.
+-   Migrated tslint to eslint
+-   Added @RMQTransform() decorator to transform incomming message
+-   Changed @Validate() decorator to @RMQValidate(). @Validate() will be depricated.
 
 ## 2.5.1
 
@@ -34,8 +38,8 @@
 ## 2.5.0
 
 -   Added support for random queue name and additional queueOprions.
--	Added deprecation warning.
--	Removed deprecated @RMQController
+-   Added deprecation warning.
+-   Removed deprecated @RMQController
 
 ## 2.4.0
 
@@ -65,7 +69,6 @@
 -   Migration to NestJS 8
 -   Added port and vhost options (thx @Kevalin)
 -   Update dependencies
-
 
 ## 2.0.6
 

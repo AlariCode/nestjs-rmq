@@ -23,7 +23,7 @@ describe('RMQe2e', () => {
 						{
 							login: 'guest',
 							password: 'guest',
-							host: '192.168.1.35',
+							host: 'localhost',
 						},
 					],
 					queueName: 'test',
