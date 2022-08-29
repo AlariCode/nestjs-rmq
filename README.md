@@ -2,7 +2,7 @@
 
 ![alt cover](https://github.com/AlariCode/nestjs-rmq/raw/master/img/new-logo.jpg)
 
-**More NestJS libs on [purpleschool.ru]https://purpleschool.ru/)**
+**More NestJS libs on [purpleschool.ru](https://purpleschool.ru)**
 
 [![npm version](https://badgen.net/npm/v/nestjs-rmq)](https://www.npmjs.com/package/nestjs-rmq)
 [![npm version](https://badgen.net/npm/license/nestjs-rmq)](https://www.npmjs.com/package/nestjs-rmq)
