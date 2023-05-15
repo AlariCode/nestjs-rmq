@@ -17,6 +17,9 @@ import {
 	INITIALIZATION_STEP_DELAY,
 	ERROR_NO_QUEUE,
 	RMQ_PROTOCOL,
+	CONNECT_FAILED_MESSAGE,
+	WRONG_CREDENTIALS_MESSAGE,
+  CONNECT_FAILED
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -64,7 +67,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 	}
 
 	public async init(): Promise<void> {
-		return new Promise(async (resolve) => {
+		return new Promise(async (resolve, reject) => {
 			const connectionURLs: string[] = this.options.connections.map((connection: IRMQConnection) => {
 				return this.createConnectionUri(connection);
 			});
@@ -84,6 +87,14 @@ export class RMQService implements OnModuleInit, IRMQService {
 				this.detachEmitters();
 				this.logger.error(DISCONNECT_MESSAGE);
 				this.logger.error(err.err);
+			});
+			this.server.on(CONNECT_FAILED, (err) => {
+				this.logger.error(CONNECT_FAILED_MESSAGE);
+				this.logger.error(err.err);
+				if (err.err.message.includes('ACCESS-REFUSED') || err.err.message.includes('403')) {
+					this.logger.error(WRONG_CREDENTIALS_MESSAGE)
+					reject(err);
+				}
 			});
 
 			await Promise.all([this.createClientChannel(), this.createSubscriptionChannel()]);
