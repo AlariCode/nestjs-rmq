@@ -8,8 +8,11 @@ export const RMQ_MODULE_OPTIONS = 'RMQ_MODULE_OPTIONS';
 
 export const DISCONNECT_EVENT = 'disconnect';
 export const CONNECT_EVENT = 'connect';
+export const CONNECT_FAILED = 'connectFailed';
 export const DISCONNECT_MESSAGE = 'Disconnected from RMQ. Trying to reconnect';
 export const CONNECTED_MESSAGE = 'Successfully connected to RMQ';
+export const CONNECT_FAILED_MESSAGE = 'Failed to connect to RMQ';
+export const WRONG_CREDENTIALS_MESSAGE = 'Wrong credentials for RMQ'; 
 export const REPLY_QUEUE = 'amq.rabbitmq.reply-to';
 export const ERROR_NONE_RPC = 'This is none RPC queue. Use notify() method instead';
 export const ERROR_NO_ROUTE = "Requested service doesn't have RMQRoute with this path";
