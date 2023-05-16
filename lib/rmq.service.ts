@@ -19,7 +19,7 @@ import {
 	RMQ_PROTOCOL,
 	CONNECT_FAILED_MESSAGE,
 	WRONG_CREDENTIALS_MESSAGE,
-  CONNECT_FAILED
+	CONNECT_FAILED,
 } from './constants';
 import { EventEmitter } from 'events';
 import { Channel, Message } from 'amqplib';
@@ -92,7 +92,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 				this.logger.error(CONNECT_FAILED_MESSAGE);
 				this.logger.error(err.err);
 				if (err.err.message.includes('ACCESS-REFUSED') || err.err.message.includes('403')) {
-					this.logger.error(WRONG_CREDENTIALS_MESSAGE)
+					this.logger.error(WRONG_CREDENTIALS_MESSAGE);
 					reject(err);
 				}
 			});

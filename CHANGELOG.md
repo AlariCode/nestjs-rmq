@@ -1,5 +1,9 @@
 # Change log
 
+## 2.8.1
+
+-   Throw error on wrong credentials (thx @ponomarevkonst)
+
 ## 2.8.0
 
 -   Updated to nestjs 9
