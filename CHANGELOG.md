@@ -1,5 +1,9 @@
 # Change log
 
+## 2.9.0
+
+-   Updated to Nest 10
+
 ## 2.8.1
 
 -   Throw error on wrong credentials (thx @ponomarevkonst)
