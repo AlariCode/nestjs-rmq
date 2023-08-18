@@ -1,5 +1,9 @@
 # Change log
 
+## 2.10.0
+
+-   Overriding intercepters
+
 ## 2.9.0
 
 -   Updated to Nest 10
