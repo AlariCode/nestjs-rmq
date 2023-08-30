@@ -1,5 +1,9 @@
 # Change log
 
+## 2.11.0
+
+-   Update class-validator
+
 ## 2.10.0
 
 -   Overriding intercepters
