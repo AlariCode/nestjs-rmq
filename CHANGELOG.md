@@ -1,5 +1,10 @@
 # Change log
 
+## 2.12.0
+
+- Use native UUID
+- Update dependencies
+
 ## 2.11.0
 
 -   Update class-validator
