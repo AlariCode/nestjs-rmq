@@ -83,7 +83,7 @@ export class RMQExplorer implements OnModuleInit {
 					return;
 				}
 				const result = await methodRef.apply(instance, funcArgs);
-				if (msg.properties.replyTo && result) {
+				if (msg.properties.replyTo && result !== undefined) {
 					responseEmitter.emit(ResponseEmitterResult.success, msg, result);
 				} else if (msg.properties.replyTo && result === undefined) {
 					responseEmitter.emit(

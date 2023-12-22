@@ -1,5 +1,9 @@
 # Change log
 
+## 2.13.0
+
+- Fix error when null response was ignored
+
 ## 2.12.0
 
 - Use native UUID
