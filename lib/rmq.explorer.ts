@@ -40,9 +40,8 @@ export class RMQExplorer implements OnModuleInit {
 				return;
 			}
 
-			this.metadataScanner.scanFromPrototype(instance, Object.getPrototypeOf(instance), (key: string) =>
-				this.lookupRMQRoute(instance, key)
-			);
+			this.metadataScanner.getAllMethodNames(Object.getPrototypeOf(instance))
+				.map((key) => this.lookupRMQRoute(instance, key));
 		});
 	}
 
