@@ -41,7 +41,7 @@ export class RmqErrorService {
 		return RMQErrorHandler.handle(headers);
 	}
 
-	private isRMQError(error: Error | RMQError): error is RMQError {
+	protected isRMQError(error: Error | RMQError): error is RMQError {
 		return (error as RMQError).code !== undefined;
 	}
 }
