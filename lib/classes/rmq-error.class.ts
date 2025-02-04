@@ -9,7 +9,7 @@ export class RMQError extends Error {
 	/**
 	 * @summary Error code
 	 */
-	code?: number;
+	code?: number | string;
 
 	/**
 	 * @summary Error custom data
@@ -31,7 +31,14 @@ export class RMQError extends Error {
 	 */
 	type?: ERROR_TYPE;
 
-	constructor(message: string, type: ERROR_TYPE, code?: number, data?: any, service?: string, host?: string) {
+	constructor(
+		message: string,
+		type: ERROR_TYPE,
+		code?: number | string,
+		data?: any,
+		service?: string,
+		host?: string
+	) {
 		super();
 		Object.setPrototypeOf(this, new.target.prototype);
 		this.message = message;
