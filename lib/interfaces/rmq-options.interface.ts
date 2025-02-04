@@ -39,8 +39,8 @@ export interface IRMQServiceOptions {
 	messagesTimeout?: number;
 	logMessages?: boolean;
 	logger?: LoggerService;
-	middleware?: typeof RMQPipeClass[];
-	intercepters?: typeof RMQIntercepterClass[];
+	middleware?: (typeof RMQPipeClass)[];
+	intercepters?: (typeof RMQIntercepterClass)[];
 	errorHandler?: typeof RMQErrorHandler;
 	serviceName?: string;
 	autoBindingRoutes?: boolean;

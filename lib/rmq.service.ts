@@ -283,7 +283,7 @@ export class RMQService implements OnModuleInit, IRMQService {
 		try {
 			res = await this.intercept(res, msg, error);
 		} catch (e) {
-			error = e
+			error = e;
 		}
 		await this.subscriptionChannel.sendToQueue(msg.properties.replyTo, Buffer.from(JSON.stringify(res)), {
 			correlationId: msg.properties.correlationId,
