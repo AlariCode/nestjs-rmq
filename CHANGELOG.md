@@ -1,5 +1,9 @@
 # Change log
 
+## 2.14.0
+
+- change access modifier of is RMQError (thx Jorbanog)
+
 ## 2.13.0
 
 - Fix error when null response was ignored
